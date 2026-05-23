@@ -5,134 +5,134 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>家族投資組合 — 管理</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg: #ffffff; --bg2: #f7f7f5; --bg3: #f0efe8;
-  --text: #1a1a18; --text2: #6b6b66; --text3: #9e9e99;
-  --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
-  --pos: #1D9E75; --neg: #D85A30;
-  --rad-md: 8px; --rad-lg: 12px;
-}
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b; --text: #f0efe8; --text2: #9e9e99; --text3: #6b6b66; --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18); }
-}
-body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
-.page { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem; }
-.top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
-.top-bar h1 { font-size: 20px; font-weight: 500; }
-.top-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: var(--rad-md); font-size: 13px; cursor: pointer; border: 0.5px solid var(--border2); background: var(--bg); color: var(--text2); }
-.btn:hover { background: var(--bg2); }
-.btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
-.btn-primary:hover { opacity: .85; }
-.btn-green { background: var(--pos); color: #fff; border-color: var(--pos); }
-.btn-green:hover { opacity: .85; }
-.status { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
-.sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--pos); flex-shrink: 0; }
-.sdot.err { background: var(--neg); }
-.admin-badge { background: #E6F1FB; color: #0C447C; font-size: 11px; padding: 2px 8px; border-radius: var(--rad-md); font-weight: 500; }
-.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
-.metric { background: var(--bg); border-radius: var(--rad-md); padding: .9rem 1rem; border: 0.5px solid var(--border); }
-.metric .lbl { font-size: 12px; color: var(--text2); margin-bottom: 5px; }
-.metric .val { font-size: 20px; font-weight: 500; }
-.metric .sub { font-size: 12px; margin-top: 3px; }
-.pos { color: var(--pos); } .neg { color: var(--neg); } .neu { color: var(--text2); }
-.sec-title { font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
-.acc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
-.acc-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rad-lg); padding: 1rem 1.1rem; }
-.acc-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 13px; flex-shrink: 0; }
-.av-b { background: #E6F1FB; color: #0C447C; } .av-t { background: #E1F5EE; color: #085041; } .av-a { background: #FAEEDA; color: #633806; }
-.acc-name { font-size: 14px; font-weight: 500; } .acc-sub { font-size: 11px; color: var(--text2); }
-.acc-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
-.acc-row .k { font-size: 12px; color: var(--text2); } .acc-row .v { font-size: 13px; font-weight: 500; }
-.divider { border: none; border-top: 0.5px solid var(--border); margin: 10px 0; }
-.op-box { background: #FAEEDA; border-radius: var(--rad-md); padding: 8px 10px; margin-top: 8px; }
-.op-box .olbl { font-size: 11px; color: #633806; margin-bottom: 2px; }
-.op-box .oval { font-size: 14px; font-weight: 500; }
-.my-panel { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rad-lg); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
-.my-panel-head { display: flex; align-items: center; margin-bottom: 12px; }
-.my-panel-head h2 { font-size: 15px; font-weight: 500; }
-.op-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 8px; }
-.op-m { background: var(--bg2); border-radius: var(--rad-md); padding: .7rem .9rem; }
-.op-m .lbl { font-size: 11px; color: var(--text2); margin-bottom: 3px; }
-.op-m .val { font-size: 16px; font-weight: 500; }
-.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
-.tabs { display: flex; gap: 2px; }
-.tab { padding: 4px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; color: var(--text2); border: none; background: transparent; }
-.tab.active { background: var(--bg); color: var(--text); font-weight: 500; box-shadow: 0 0 0 0.5px var(--border2); }
-.tbl-wrap { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rad-lg); overflow: hidden; margin-bottom: 1.5rem; overflow-x: auto; }
-table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 12px; }
-th { background: var(--bg2); padding: 7px 10px; text-align: left; font-weight: 500; color: var(--text2); font-size: 11px; border-bottom: 0.5px solid var(--border); }
-th.r, td.r { text-align: right; }
-td { padding: 9px 10px; border-bottom: 0.5px solid var(--border); color: var(--text); vertical-align: middle; }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: var(--bg2); }
-.badge { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 4px; font-weight: 500; vertical-align: middle; }
-.tw-b { background: #E1F5EE; color: #085041; } .us-b { background: #E6F1FB; color: #0C447C; } .op-b { background: #FAEEDA; color: #633806; }
-.empty { text-align: center; color: var(--text3); padding: 3rem; }
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; align-items: flex-start; justify-content: center; padding-top: 40px; overflow-y: auto; }
-.modal-overlay.open { display: flex; }
-.modal { background: var(--bg); border-radius: var(--rad-lg); border: 0.5px solid var(--border); padding: 1.5rem; width: 92%; max-width: 780px; margin-bottom: 40px; }
-.modal h2 { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
-.modal-desc { font-size: 12px; color: var(--text2); margin-bottom: 1.25rem; line-height: 1.6; }
-.batch-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
-.batch-table th { background: var(--bg2); padding: 7px 8px; text-align: left; font-weight: 500; color: var(--text2); font-size: 11px; border-bottom: 0.5px solid var(--border); }
-.batch-table td { padding: 5px 4px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
-.batch-table tr:last-child td { border-bottom: none; }
-.batch-table input, .batch-table select { width: 100%; padding: 5px 6px; border-radius: var(--rad-md); border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); font-size: 12px; }
-.del-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 16px; padding: 0 4px; }
-.del-btn:hover { color: var(--neg); }
-.add-row-btn { font-size: 12px; color: var(--text2); background: none; border: 0.5px dashed var(--border2); border-radius: var(--rad-md); padding: 6px 14px; cursor: pointer; width: 100%; margin-bottom: 1rem; }
-.add-row-btn:hover { background: var(--bg2); }
-.modal-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
-.batch-err { font-size: 12px; color: var(--neg); margin-bottom: 10px; display: none; }
-.progress-bar { height: 3px; background: var(--bg2); border-radius: 2px; margin-bottom: 10px; overflow: hidden; display: none; }
-.progress-fill { height: 100%; background: var(--pos); border-radius: 2px; transition: width .2s; }
-.spin { animation: spin 1s linear infinite; display: inline-block; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.csv-box { background: var(--bg2); border-radius: var(--rad-lg); border: 0.5px solid var(--border); padding: 1.25rem; margin-bottom: 1.5rem; }
-.csv-box h3 { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
-.csv-box p { font-size: 12px; color: var(--text2); margin-bottom: 12px; line-height: 1.6; }
-.csv-format { background: var(--bg); border-radius: var(--rad-md); border: 0.5px solid var(--border); padding: 10px 12px; font-family: monospace; font-size: 11px; color: var(--text2); margin-bottom: 12px; line-height: 1.8; overflow-x: auto; white-space: pre; }
-.drop-zone { border: 1.5px dashed var(--border2); border-radius: var(--rad-md); padding: 2rem; text-align: center; cursor: pointer; transition: background .15s; }
-.drop-zone:hover, .drop-zone.drag-over { background: var(--bg); }
-.drop-zone p { font-size: 13px; color: var(--text2); margin-bottom: 8px; }
-.drop-zone .hint { font-size: 11px; color: var(--text3); }
-.import-preview { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rad-lg); overflow: hidden; margin-top: 1rem; display: none; }
-.import-preview-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg2); border-bottom: 0.5px solid var(--border); }
-.import-preview-head span { font-size: 13px; font-weight: 500; }
-.import-preview table { width: 100%; min-width: 500px; border-collapse: collapse; font-size: 12px; }
-.import-preview th { background: var(--bg2); padding: 6px 10px; text-align: left; font-weight: 500; color: var(--text2); font-size: 11px; border-bottom: 0.5px solid var(--border); }
-.import-preview td { padding: 7px 10px; border-bottom: 0.5px solid var(--border); color: var(--text); }
-.import-preview tr:last-child td { border-bottom: none; }
-.row-ok { } .row-err td { background: #FCEBEB; color: #A32D2D; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fff;--bg2:#f7f7f5;--bg3:#f0efe8;--text:#1a1a18;--text2:#6b6b66;--text3:#9e9e99;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.18);--pos:#1D9E75;--neg:#D85A30;--rad-md:8px;--rad-lg:12px}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;--text:#f0efe8;--text2:#9e9e99;--text3:#6b6b66;--border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.18)}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh}
+.page{max-width:980px;margin:0 auto;padding:2rem 1.25rem}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px}
+.top-bar h1{font-size:20px;font-weight:500}
+.top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:var(--rad-md);font-size:13px;cursor:pointer;border:.5px solid var(--border2);background:var(--bg);color:var(--text2)}
+.btn:hover{background:var(--bg2)}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn-primary:hover{opacity:.85}
+.status{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--pos);flex-shrink:0}
+.sdot.err{background:var(--neg)}
+.admin-badge{background:#E6F1FB;color:#0C447C;font-size:11px;padding:2px 8px;border-radius:var(--rad-md);font-weight:500}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.5rem}
+.metric{background:var(--bg);border-radius:var(--rad-md);padding:.9rem 1rem;border:.5px solid var(--border)}
+.metric .lbl{font-size:12px;color:var(--text2);margin-bottom:5px}
+.metric .val{font-size:20px;font-weight:500}
+.metric .sub{font-size:12px;margin-top:3px}
+.pos{color:var(--pos)}.neg{color:var(--neg)}.neu{color:var(--text2)}
+.sec-title{font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+.acc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:1.5rem}
+.acc-card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rad-lg);padding:1rem 1.1rem}
+.acc-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px;flex-shrink:0}
+.av-b{background:#E6F1FB;color:#0C447C}.av-t{background:#E1F5EE;color:#085041}.av-a{background:#FAEEDA;color:#633806}
+.acc-name{font-size:14px;font-weight:500}.acc-sub{font-size:11px;color:var(--text2)}
+.acc-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+.acc-row .k{font-size:12px;color:var(--text2)}.acc-row .v{font-size:13px;font-weight:500}
+.divider{border:none;border-top:.5px solid var(--border);margin:10px 0}
+.op-box{background:#FAEEDA;border-radius:var(--rad-md);padding:8px 10px;margin-top:8px}
+.op-box .olbl{font-size:11px;color:#633806;margin-bottom:2px}
+.op-box .oval{font-size:14px;font-weight:500}
+.my-panel{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rad-lg);padding:1rem 1.25rem;margin-bottom:1.5rem}
+.my-panel-head{display:flex;align-items:center;margin-bottom:12px}
+.my-panel-head h2{font-size:15px;font-weight:500}
+.op-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:8px}
+.op-m{background:var(--bg2);border-radius:var(--rad-md);padding:.7rem .9rem}
+.op-m .lbl{font-size:11px;color:var(--text2);margin-bottom:3px}
+.op-m .val{font-size:16px;font-weight:500}
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.tabs{display:flex;gap:2px}
+.tab{padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;color:var(--text2);border:none;background:transparent}
+.tab.active{background:var(--bg);color:var(--text);font-weight:500;box-shadow:0 0 0 .5px var(--border2)}
+.tbl-wrap{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rad-lg);overflow:hidden;margin-bottom:1.5rem;overflow-x:auto}
+table{width:100%;min-width:640px;border-collapse:collapse;font-size:12px}
+th{background:var(--bg2);padding:7px 10px;text-align:left;font-weight:500;color:var(--text2);font-size:11px;border-bottom:.5px solid var(--border)}
+th.r,td.r{text-align:right}
+td{padding:8px 10px;border-bottom:.5px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.group-row{cursor:pointer}
+tr.group-row:hover td{background:var(--bg2)}
+tr.detail-row td{background:var(--bg2);font-size:11px;color:var(--text2);padding:5px 10px}
+tr.detail-row:last-of-type td{border-bottom:none}
+.badge{display:inline-block;font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:500;vertical-align:middle}
+.tw-b{background:#E1F5EE;color:#085041}.us-b{background:#E6F1FB;color:#0C447C}.op-b{background:#FAEEDA;color:#633806}
+.dca-b{background:#F0E6FB;color:#5B0CAC}
+.empty{text-align:center;color:var(--text3);padding:3rem}
+.expand-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:0 4px;transition:transform .2s}
+.expand-btn.open{transform:rotate(90deg)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--rad-lg);border:.5px solid var(--border);padding:1.5rem;width:92%;max-width:780px;margin-bottom:40px}
+.modal h2{font-size:16px;font-weight:500;margin-bottom:4px}
+.modal-desc{font-size:12px;color:var(--text2);margin-bottom:1.25rem;line-height:1.6}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}
+.field input,.field select{width:100%;padding:8px 10px;border-radius:var(--rad-md);border:.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px}
+.hint{font-size:11px;color:var(--text3);margin-top:3px}
+.op-section{background:var(--bg2);border-radius:var(--rad-md);padding:10px;margin-bottom:12px}
+.op-section .tlbl{font-size:12px;font-weight:500;margin-bottom:8px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;flex-wrap:wrap}
+.merr{font-size:12px;color:var(--neg);margin-top:6px;display:none}
+.batch-table{width:100%;border-collapse:collapse;margin-bottom:1rem}
+.batch-table th{background:var(--bg2);padding:7px 8px;text-align:left;font-weight:500;color:var(--text2);font-size:11px;border-bottom:.5px solid var(--border)}
+.batch-table td{padding:5px 4px;border-bottom:.5px solid var(--border);vertical-align:middle}
+.batch-table tr:last-child td{border-bottom:none}
+.batch-table input,.batch-table select{width:100%;padding:5px 6px;border-radius:var(--rad-md);border:.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:12px}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 4px}
+.del-btn:hover{color:var(--neg)}
+.add-row-btn{font-size:12px;color:var(--text2);background:none;border:.5px dashed var(--border2);border-radius:var(--rad-md);padding:6px 14px;cursor:pointer;width:100%;margin-bottom:1rem}
+.add-row-btn:hover{background:var(--bg2)}
+.progress-bar{height:3px;background:var(--bg2);border-radius:2px;margin-bottom:10px;overflow:hidden;display:none}
+.progress-fill{height:100%;background:var(--pos);border-radius:2px;transition:width .2s}
+.csv-box{background:var(--bg2);border-radius:var(--rad-lg);border:.5px solid var(--border);padding:1.25rem;margin-bottom:1.5rem}
+.csv-box h3{font-size:14px;font-weight:500;margin-bottom:6px}
+.csv-box p{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6}
+.csv-format{background:var(--bg);border-radius:var(--rad-md);border:.5px solid var(--border);padding:10px 12px;font-family:monospace;font-size:11px;color:var(--text2);margin-bottom:12px;line-height:1.8;overflow-x:auto;white-space:pre}
+.drop-zone{border:1.5px dashed var(--border2);border-radius:var(--rad-md);padding:2rem;text-align:center;cursor:pointer;transition:background .15s}
+.drop-zone:hover,.drop-zone.drag-over{background:var(--bg)}
+.drop-zone p{font-size:13px;color:var(--text2);margin-bottom:8px}
+.drop-zone .hint{font-size:11px;color:var(--text3)}
+.import-preview{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rad-lg);overflow:hidden;margin-top:1rem;display:none}
+.import-preview-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg2);border-bottom:.5px solid var(--border)}
+.import-preview-head span{font-size:13px;font-weight:500}
+.import-preview table{width:100%;min-width:500px;border-collapse:collapse;font-size:12px}
+.import-preview th{background:var(--bg2);padding:6px 10px;text-align:left;font-weight:500;color:var(--text2);font-size:11px;border-bottom:.5px solid var(--border)}
+.import-preview td{padding:7px 10px;border-bottom:.5px solid var(--border);color:var(--text)}
+.import-preview tr:last-child td{border-bottom:none}
+.row-err td{background:#FCEBEB;color:#A32D2D}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div class="page">
-
 <div class="top-bar">
   <h1>家族投資組合 <span class="admin-badge">管理員</span></h1>
   <div class="top-right">
     <div class="status"><span class="sdot" id="sdot"></span><span id="stxt">載入中...</span></div>
     <button class="btn" onclick="fetchAll()"><span id="ricon">↻</span> 更新報價</button>
-    <button class="btn" onclick="openModal()">＋ 手動新增</button>
+    <button class="btn btn-primary" onclick="openModal()">＋ 新增持股</button>
   </div>
 </div>
 
 <div class="csv-box">
   <h3>📂 CSV 批次匯入</h3>
-  <p>把所有持股整理成 CSV 檔，一次上傳全部。格式如下（第一行是標題，之後每行一筆）：</p>
+  <p>把所有持股整理成 CSV 檔，一次上傳全部。格式：</p>
   <div class="csv-format">ticker,market,shares,cost,owner,op_type
 2330,tw,1000,750,dad,old
-2454,tw,500,1200,mom,none
-NVDA,us,20,98,me,none
-2330,tw,200,880,dad,mine</div>
-  <p style="margin-bottom:12px">owner 填 <b>dad</b>／<b>mom</b>／<b>me</b>　　market 填 <b>tw</b>／<b>us</b>　　op_type 填 <b>mine</b>（我操盤）或 <b>old</b>／<b>none</b>（不計入）</p>
+NVDA,us,20,98,me,mine
+00919,tw,129,22.95,dad,mine</div>
+  <p>owner：<b>dad／mom／me</b>　market：<b>tw／us</b>　op_type：<b>mine</b>（操盤）或 <b>old／none</b></p>
   <div class="drop-zone" id="drop-zone" onclick="g('csv-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
     <p>點此選擇 CSV 檔，或直接拖拉進來</p>
-    <div class="hint">支援 .csv 格式，UTF-8 或 Big5 編碼</div>
+    <div class="hint">支援 .csv，UTF-8 或 Big5 編碼</div>
   </div>
   <input type="file" id="csv-input" accept=".csv" style="display:none" onchange="onFileSelect(event)">
   <div class="import-preview" id="import-preview">
@@ -140,15 +140,10 @@ NVDA,us,20,98,me,none
       <span id="preview-title">預覽</span>
       <div style="display:flex;gap:8px">
         <button class="btn" onclick="clearImport()">清除</button>
-        <button class="btn btn-green" id="import-btn" onclick="importCSV()">✓ 確認匯入</button>
+        <button class="btn btn-primary" id="import-btn" onclick="importCSV()">✓ 確認匯入</button>
       </div>
     </div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr><th>#</th><th>代號</th><th>市場</th><th>股數</th><th>成本</th><th>持有人</th><th>操盤</th><th>狀態</th></tr></thead>
-        <tbody id="preview-tbody"></tbody>
-      </table>
-    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>代號</th><th>市場</th><th>股數</th><th>成本</th><th>持有人</th><th>操盤</th><th>狀態</th></tr></thead><tbody id="preview-tbody"></tbody></table></div>
   </div>
 </div>
 
@@ -211,15 +206,15 @@ NVDA,us,20,98,me,none
   <table>
     <thead>
       <tr>
-        <th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th>
+        <th style="width:32px"></th>
+        <th>股票</th><th class="r">現價</th><th class="r">加權成本</th><th class="r">總股數</th>
         <th class="r">市值(台幣)</th><th class="r">損益(台幣)</th><th class="r">損益%</th>
-        <th>持有人</th><th></th>
+        <th>持有人</th>
       </tr>
     </thead>
     <tbody id="tbody"><tr><td colspan="9" class="empty">載入中...</td></tr></tbody>
   </table>
 </div>
-
 </div>
 
 <div class="modal-overlay" id="modal">
@@ -227,17 +222,10 @@ NVDA,us,20,98,me,none
     <h2>手動新增持股</h2>
     <p class="modal-desc">一次可填多筆，空白列會跳過。</p>
     <div class="progress-bar" id="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-    <div class="batch-err" id="batch-err"></div>
+    <div class="merr" id="batch-err"></div>
     <div style="overflow-x:auto">
       <table class="batch-table">
-        <thead>
-          <tr>
-            <th style="width:70px">持有人</th><th style="width:60px">市場</th>
-            <th style="width:90px">股票代號</th><th style="width:90px">股數</th>
-            <th style="width:90px">成本/股</th><th style="width:160px">爸爸帳戶屬性</th>
-            <th style="width:30px"></th>
-          </tr>
-        </thead>
+        <thead><tr><th style="width:70px">持有人</th><th style="width:60px">市場</th><th style="width:90px">股票代號</th><th style="width:90px">股數</th><th style="width:90px">成本/股</th><th style="width:160px">爸爸帳戶屬性</th><th style="width:30px"></th></tr></thead>
         <tbody id="batch-tbody"></tbody>
       </table>
     </div>
@@ -250,62 +238,71 @@ NVDA,us,20,98,me,none
 </div>
 
 <script>
-const SUPABASE_URL = 'https://nqauumyfpdqkkqfjxury.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xYXV1bXlmcGRxa2txZmp4dXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mjk4MDYsImV4cCI6MjA5NTEwNTgwNn0.j-Ql0_eDLiCLRDyEzbzjVtq4mw7ORdk9eLniDR7zyow';
-const RATE = 32.5;
-let stocks = [], prices = {}, curFilter = 'all', rowCount = 0, importData = [];
+const SB_URL='https://nqauumyfpdqkkqfjxury.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xYXV1bXlmcGRxa2txZmp4dXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mjk4MDYsImV4cCI6MjA5NTEwNTgwNn0.j-Ql0_eDLiCLRDyEzbzjVtq4mw7ORdk9eLniDR7zyow';
+const RATE=32.5;
+let stocks=[],prices={},curFilter='all',rowCount=0,importData=[],expandedGroups={};
 
-function g(id) { return document.getElementById(id); }
-async function api(method, path, body) {
-  const r = await fetch(SUPABASE_URL+'/rest/v1/'+path, {
-    method, headers: {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=representation':''},
-    body: body ? JSON.stringify(body) : undefined
-  });
-  if (!r.ok) throw new Error(await r.text());
+function g(id){return document.getElementById(id)}
+async function api(method,path,body){
+  const r=await fetch(SB_URL+'/rest/v1/'+path,{method,headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=representation':''},body:body?JSON.stringify(body):undefined});
+  if(!r.ok)throw new Error(await r.text());
   return method==='DELETE'?null:r.json();
 }
-async function loadStocks() { stocks = await api('GET','stocks?select=*&order=created_at.asc'); }
-function getSymbol(s) { return s.market==='tw'?s.ticker+'.TW':s.ticker; }
-function getMV(s) { const p=prices[getSymbol(s)]; if(!p) return null; return (s.market==='us'?p*RATE:p)*s.shares; }
-function getCostTWD(s) { return (s.market==='us'?s.cost*RATE:s.cost)*s.shares; }
-function fmt(n) { return Math.round(n).toLocaleString('zh-TW'); }
-function pnlCls(v) { return v>=0?'pos':'neg'; }
-function sign(v) { return v>=0?'+':''; }
+async function loadStocks(){stocks=await api('GET','stocks?select=*&order=created_at.asc')}
+function getSymbol(s){return s.market==='tw'?s.ticker+'.TW':s.ticker}
+function getMV(s){const p=prices[getSymbol(s)];if(!p)return null;return(s.market==='us'?p*RATE:p)*s.shares}
+function getCostTWD(s){return(s.market==='us'?s.cost*RATE:s.cost)*s.shares}
+function fmt(n){return Math.round(n).toLocaleString('zh-TW')}
+function pnlCls(v){return v>=0?'pos':'neg'}
+function sign(v){return v>=0?'+':''}
+function setStatus(txt,err){g('stxt').textContent=txt;g('sdot').className='sdot'+(err?' err':'')}
 
-async function fetchPrice(sym) {
-  try {
-    const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=1d');
-    const d = await r.json(); const m = d.chart.result[0].meta;
-    return m.regularMarketPrice||m.previousClose;
-  } catch(e) { return null; }
+async function fetchPrice(sym){
+  try{const r=await fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=1d');const d=await r.json();const m=d.chart.result[0].meta;return m.regularMarketPrice||m.previousClose;}catch(e){return null}
 }
-async function fetchAll() {
-  if (!stocks.length) { renderAll(); return; }
-  const ic=g('ricon'); ic.textContent='⟳'; ic.className='spin';
+async function fetchAll(){
+  if(!stocks.length){renderAll();return}
+  const ic=g('ricon');ic.textContent='⟳';ic.className='spin';
   setStatus('更新報價中...',false);
   const syms=[...new Set(stocks.map(getSymbol))];
   let ok=0,fail=0;
-  await Promise.all(syms.map(async function(sym){ const p=await fetchPrice(sym); if(p!=null){prices[sym]=p;ok++;}else fail++; }));
-  ic.className=''; ic.textContent='↻';
-  const now=new Date(), t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  await Promise.all(syms.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else fail++;}));
+  ic.className='';ic.textContent='↻';
+  const now=new Date(),t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   setStatus(fail===0?'已更新 '+t:ok+'成功/'+fail+'失敗',fail>0);
   renderAll();
 }
-function setStatus(txt,err){g('stxt').textContent=txt;g('sdot').className='sdot'+(err?' err':'');}
+
+// Group stocks by ticker+owner, merge into DCA groups
+function groupStocks(list){
+  const map={};
+  list.forEach(s=>{
+    const key=s.ticker+'|'+s.owner;
+    if(!map[key]) map[key]={ticker:s.ticker,market:s.market,owner:s.owner,op_type:s.op_type,batches:[],totalShares:0,totalCostTWD:0};
+    const g=map[key];
+    g.batches.push(s);
+    g.totalShares+=s.shares;
+    g.totalCostTWD+=getCostTWD(s);
+    // inherit op_type if any batch is mine
+    if(s.op_type==='mine') g.op_type='mine';
+  });
+  return Object.values(map);
+}
 
 function renderSummary(){
   let totV=0,totC=0;
   const acc={dad:{v:0,c:0,myV:0,myC:0,n:0},mom:{v:0,c:0,n:0},me:{v:0,c:0,n:0}};
-  stocks.forEach(function(s){
-    const mv=getMV(s); if(mv===null) return;
-    const c=getCostTWD(s); totV+=mv; totC+=c;
-    const o=s.owner; if(acc[o]){acc[o].v+=mv;acc[o].c+=c;acc[o].n++;}
+  stocks.forEach(s=>{
+    const mv=getMV(s);if(mv===null)return;
+    const c=getCostTWD(s);totV+=mv;totC+=c;
+    const o=s.owner;if(acc[o]){acc[o].v+=mv;acc[o].c+=c;acc[o].n++;}
     if(o==='dad'&&s.op_type==='mine'){acc.dad.myV+=mv;acc.dad.myC+=c;}
   });
   const pnl=totV-totC,pct=totC>0?pnl/totC*100:0,sc=pnlCls(pnl);
   g('s-total').textContent=stocks.length?'$'+fmt(totV):'—';
-  const pe=g('s-pnl'); pe.textContent=stocks.length?sign(pnl)+'$'+fmt(Math.abs(pnl)):'—'; pe.className='val '+sc;
-  const ppe=g('s-pct'); ppe.textContent=stocks.length?sign(pnl)+pct.toFixed(1)+'%':''; ppe.className='sub '+sc;
+  const pe=g('s-pnl');pe.textContent=stocks.length?sign(pnl)+'$'+fmt(Math.abs(pnl)):'—';pe.className='val '+sc;
+  const ppe=g('s-pct');ppe.textContent=stocks.length?sign(pnl)+pct.toFixed(1)+'%':'';ppe.className='sub '+sc;
   g('s-count').textContent=stocks.length;
   g('s-mkt').textContent='台股 '+stocks.filter(s=>s.market==='tw').length+' ／ 美股 '+stocks.filter(s=>s.market==='us').length;
   const now=new Date();
@@ -313,68 +310,109 @@ function renderSummary(){
   const myPnl=acc.dad.myV-acc.dad.myC,myPct=acc.dad.myC>0?myPnl/acc.dad.myC*100:0,ms=sign(myPnl),mc=pnlCls(myPnl);
   g('op-cost').textContent=acc.dad.myC>0?'$'+fmt(acc.dad.myC):'—';
   g('op-val').textContent=acc.dad.myV>0?'$'+fmt(acc.dad.myV):'—';
-  const ope=g('op-pnl'); ope.textContent=acc.dad.myC>0?ms+'$'+fmt(Math.abs(myPnl)):'—'; ope.className='val '+mc;
-  const oppe=g('op-pct'); oppe.textContent=acc.dad.myC>0?ms+myPct.toFixed(1)+'%':''; oppe.className=mc;
+  const ope=g('op-pnl');ope.textContent=acc.dad.myC>0?ms+'$'+fmt(Math.abs(myPnl)):'—';ope.className='val '+mc;
+  const oppe=g('op-pct');oppe.textContent=acc.dad.myC>0?ms+myPct.toFixed(1)+'%':'';oppe.className=mc;
   const dadPnl=acc.dad.v-acc.dad.c,dCls=pnlCls(dadPnl);
-  g('a-dad-n').textContent=acc.dad.n+' 檔';
+  g('a-dad-n').textContent=acc.dad.n+' 筆';
   g('a-dad-val').textContent=acc.dad.n?'$'+fmt(acc.dad.v):'—';
-  const dpe=g('a-dad-pnl'); dpe.textContent=acc.dad.n?sign(dadPnl)+'$'+fmt(Math.abs(dadPnl)):'—'; dpe.className='v '+dCls;
+  const dpe=g('a-dad-pnl');dpe.textContent=acc.dad.n?sign(dadPnl)+'$'+fmt(Math.abs(dadPnl)):'—';dpe.className='v '+dCls;
   const dop=g('a-dad-op');
   if(acc.dad.myC>0){dop.textContent=ms+'$'+fmt(Math.abs(myPnl))+' ('+ms+myPct.toFixed(1)+'%)';dop.className='oval '+mc;}
   else{dop.textContent='尚未設定操盤持股';dop.className='oval neu';}
-  [['mom','a-mom'],['me','a-me']].forEach(function(pair){
-    const o=pair[0],pre=pair[1],d=acc[o],opnl=d.v-d.c,oc=pnlCls(opnl);
-    g(pre+'-n').textContent=d.n+' 檔';
+  [['mom','a-mom'],['me','a-me']].forEach(([o,pre])=>{
+    const d=acc[o],opnl=d.v-d.c,oc=pnlCls(opnl);
+    g(pre+'-n').textContent=d.n+' 筆';
     g(pre+'-val').textContent=d.n?'$'+fmt(d.v):'—';
-    const pe2=g(pre+'-pnl'); pe2.textContent=d.n?sign(opnl)+'$'+fmt(Math.abs(opnl)):'—'; pe2.className='v '+oc;
-    const ce=g(pre+'-cost'); if(ce) ce.textContent=d.n?'$'+fmt(d.c):'—';
+    const pe2=g(pre+'-pnl');pe2.textContent=d.n?sign(opnl)+'$'+fmt(Math.abs(opnl)):'—';pe2.className='v '+oc;
+    const ce=g(pre+'-cost');if(ce)ce.textContent=d.n?'$'+fmt(d.c):'—';
   });
 }
 
 function renderTable(){
   const tbody=g('tbody');
-  let filtered;
-  if(curFilter==='myop') filtered=stocks.filter(s=>s.owner==='dad'&&s.op_type==='mine');
-  else if(curFilter==='all') filtered=stocks.slice();
-  else filtered=stocks.filter(s=>s.market===curFilter);
-  if(!filtered.length){tbody.innerHTML='<tr><td colspan="9" class="empty">尚無資料</td></tr>';return;}
-  const ownerLabel={dad:'爸爸',mom:'媽媽',me:'我'};
-  tbody.innerHTML=filtered.map(function(s){
-    const p=prices[getSymbol(s)],isUS=s.market==='us';
-    const mv=p?(isUS?p*RATE:p)*s.shares:null;
-    const c=getCostTWD(s),pnl=mv!=null?mv-c:null,pct=pnl!=null&&c>0?pnl/c*100:null;
-    const sg=sign(pnl||0),cls=pnl!=null?pnlCls(pnl):'neu';
-    const isMyOp=s.owner==='dad'&&s.op_type==='mine';
-    return '<tr>'+
-      '<td><span style="font-weight:500">'+s.ticker+'</span><span class="badge '+(isUS?'us-b':'tw-b')+'">'+(isUS?'美':'台')+'</span>'+(isMyOp?'<span class="badge op-b">操盤</span>':'')+'</td>'+
-      '<td class="r">'+(p?(isUS?'$'+p.toFixed(2):fmt(p)):'—')+'</td>'+
-      '<td class="r" style="color:var(--text2)">'+(isUS?'$'+s.cost.toFixed(2):fmt(s.cost))+'</td>'+
-      '<td class="r">'+fmt(s.shares)+'</td>'+
-      '<td class="r">'+(mv!=null?'$'+fmt(mv):'—')+'</td>'+
-      '<td class="r '+cls+'">'+(pnl!=null?sg+'$'+fmt(Math.abs(pnl)):'—')+'</td>'+
-      '<td class="r '+cls+'">'+(pct!=null?sg+pct.toFixed(1)+'%':'—')+'</td>'+
-      '<td style="color:var(--text2)">'+(ownerLabel[s.owner]||s.owner)+'</td>'+
-      '<td><button onclick="delStock(\''+s.id+'\')" style="background:none;border:none;cursor:pointer;color:#9e9e99;font-size:16px">🗑</button></td>'+
-      '</tr>';
-  }).join('');
-}
-function renderAll(){renderSummary();renderTable();}
-function filter(f,btn){curFilter=f;document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderTable();}
+  let list;
+  if(curFilter==='myop') list=stocks.filter(s=>s.owner==='dad'&&s.op_type==='mine');
+  else if(curFilter==='all') list=stocks.slice();
+  else list=stocks.filter(s=>s.market===curFilter);
+  if(!list.length){tbody.innerHTML='<tr><td colspan="9" class="empty">尚無資料</td></tr>';return;}
 
+  const groups=groupStocks(list);
+  const ownerLabel={dad:'爸爸',mom:'媽媽',me:'我'};
+  let html='';
+
+  groups.forEach(grp=>{
+    const sym=grp.market==='tw'?grp.ticker+'.TW':grp.ticker;
+    const p=prices[sym];
+    const isUS=grp.market==='us';
+    const mv=p?(isUS?p*RATE:p)*grp.totalShares:null;
+    const c=grp.totalCostTWD;
+    const pnl=mv!=null?mv-c:null;
+    const pct=pnl!=null&&c>0?pnl/c*100:null;
+    const sg=sign(pnl||0),cls=pnl!=null?pnlCls(pnl):'neu';
+    const avgCost=grp.totalShares>0?grp.totalCostTWD/grp.totalShares:0;
+    const avgCostOrig=isUS?avgCost/RATE:avgCost;
+    const isDCA=grp.batches.length>1;
+    const isMyOp=grp.op_type==='mine';
+    const gkey=grp.ticker+'|'+grp.owner;
+    const isOpen=expandedGroups[gkey];
+
+    html+=`<tr class="group-row" onclick="toggleGroup('${gkey}')">
+      <td><button class="expand-btn ${isDCA?(isOpen?'open':''):''}" style="${isDCA?'':'visibility:hidden'}">${isDCA?'▶':''}</button></td>
+      <td><span style="font-weight:500">${grp.ticker}</span><span class="badge ${isUS?'us-b':'tw-b'}">${isUS?'美':'台'}</span>${isMyOp?'<span class="badge op-b">操盤</span>':''}${isDCA?'<span class="badge dca-b">定期定額</span>':''}</td>
+      <td class="r">${p?(isUS?'$'+p.toFixed(2):fmt(p)):'—'}</td>
+      <td class="r" style="color:var(--text2)">${isUS?'$'+avgCostOrig.toFixed(2):fmt(avgCostOrig)}</td>
+      <td class="r">${fmt(grp.totalShares)}</td>
+      <td class="r">${mv!=null?'$'+fmt(mv):'—'}</td>
+      <td class="r ${cls}">${pnl!=null?sg+'$'+fmt(Math.abs(pnl)):'—'}</td>
+      <td class="r ${cls}">${pct!=null?sg+pct.toFixed(1)+'%':'—'}</td>
+      <td style="color:var(--text2)">${ownerLabel[grp.owner]||grp.owner}</td>
+    </tr>`;
+
+    if(isDCA&&isOpen){
+      grp.batches.forEach(s=>{
+        const bCostOrig=isUS?s.cost:s.cost;
+        const bMV=p?(isUS?p*RATE:p)*s.shares:null;
+        const bPnl=bMV!=null?bMV-getCostTWD(s):null;
+        const bPct=bPnl!=null&&getCostTWD(s)>0?bPnl/getCostTWD(s)*100:null;
+        const bsg=sign(bPnl||0),bcls=bPnl!=null?pnlCls(bPnl):'neu';
+        html+=`<tr class="detail-row">
+          <td></td>
+          <td style="padding-left:20px">批次 #${grp.batches.indexOf(s)+1}</td>
+          <td class="r">${p?(isUS?'$'+p.toFixed(2):fmt(p)):'—'}</td>
+          <td class="r">${isUS?'$'+bCostOrig.toFixed(2):fmt(bCostOrig)}</td>
+          <td class="r">${fmt(s.shares)}</td>
+          <td class="r">${bMV!=null?'$'+fmt(bMV):'—'}</td>
+          <td class="r ${bcls}">${bPnl!=null?bsg+'$'+fmt(Math.abs(bPnl)):'—'}</td>
+          <td class="r ${bcls}">${bPct!=null?bsg+bPct.toFixed(1)+'%':'—'}</td>
+          <td><button onclick="event.stopPropagation();delStock('${s.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px" title="刪除此批次">🗑</button></td>
+        </tr>`;
+      });
+    } else if(!isDCA){
+      // Single batch - show delete in main row by appending
+      const s=grp.batches[0];
+      html=html.slice(0,-'</tr>'.length);
+      html+=`<td><button onclick="event.stopPropagation();delStock('${s.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px" title="刪除">🗑</button></td></tr>`;
+    }
+  });
+
+  tbody.innerHTML=html;
+}
+
+function toggleGroup(key){
+  expandedGroups[key]=!expandedGroups[key];
+  renderTable();
+}
+
+function renderAll(){renderSummary();renderTable()}
+function filter(f,btn){curFilter=f;document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderTable()}
+
+// CSV import
 function parseCSV(text){
   const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim());
   const header=lines[0].toLowerCase().split(',').map(h=>h.trim());
-  const rows=[];
-  for(let i=1;i<lines.length;i++){
-    const cols=lines[i].split(',').map(c=>c.trim());
-    const obj={};
-    header.forEach(function(h,idx){ obj[h]=cols[idx]||''; });
-    rows.push(obj);
-  }
-  return rows;
+  return lines.slice(1).map(line=>{const cols=line.split(',').map(c=>c.trim());const obj={};header.forEach((h,i)=>obj[h]=cols[i]||'');return obj;});
 }
-
-function validateRow(row,idx){
+function validateRow(row){
   const errors=[];
   const ticker=(row.ticker||'').toUpperCase();
   const market=(row.market||'').toLowerCase();
@@ -382,76 +420,54 @@ function validateRow(row,idx){
   const cost=parseFloat(row.cost);
   const owner=(row.owner||'').toLowerCase();
   const opType=(row.op_type||'none').toLowerCase();
-  if(!ticker) errors.push('缺少代號');
-  if(!['tw','us'].includes(market)) errors.push('market須為tw或us');
-  if(isNaN(shares)||shares<=0) errors.push('股數無效');
-  if(isNaN(cost)||cost<0) errors.push('成本無效');
-  if(!['dad','mom','me'].includes(owner)) errors.push('owner須為dad/mom/me');
-  return {ticker,market,shares,cost,owner,op_type:opType,errors};
+  if(!ticker)errors.push('缺少代號');
+  if(!['tw','us'].includes(market))errors.push('market須為tw或us');
+  if(isNaN(shares)||shares<=0)errors.push('股數無效');
+  if(isNaN(cost)||cost<0)errors.push('成本無效');
+  if(!['dad','mom','me'].includes(owner))errors.push('owner須為dad/mom/me');
+  return{ticker,market,shares,cost,owner,op_type:opType,errors};
 }
-
 function showPreview(rows){
   const tbody=g('preview-tbody');
   const ownerLabel={dad:'爸爸',mom:'媽媽',me:'我'};
   let hasErr=false;
-  tbody.innerHTML=rows.map(function(r,i){
-    const v=validateRow(r,i);
-    if(v.errors.length) hasErr=true;
+  tbody.innerHTML=rows.map((r,i)=>{
+    const v=validateRow(r);if(v.errors.length)hasErr=true;
     const errTxt=v.errors.length?'❌ '+v.errors.join('、'):'✓ 正常';
-    const cls=v.errors.length?'row-err':'row-ok';
-    return '<tr class="'+cls+'">'+
-      '<td>'+(i+1)+'</td>'+
-      '<td>'+(v.ticker||'—')+'</td>'+
-      '<td>'+(v.market==='tw'?'台股':v.market==='us'?'美股':v.market)+'</td>'+
-      '<td>'+(isNaN(v.shares)?'—':v.shares)+'</td>'+
-      '<td>'+(isNaN(v.cost)?'—':v.cost)+'</td>'+
-      '<td>'+(ownerLabel[v.owner]||v.owner)+'</td>'+
-      '<td>'+(v.op_type==='mine'?'操盤':'—')+'</td>'+
-      '<td>'+errTxt+'</td>'+
-      '</tr>';
+    return`<tr class="${v.errors.length?'row-err':''}"><td>${i+1}</td><td>${v.ticker||'—'}</td><td>${v.market==='tw'?'台股':'美股'}</td><td>${isNaN(v.shares)?'—':v.shares}</td><td>${isNaN(v.cost)?'—':v.cost}</td><td>${ownerLabel[v.owner]||v.owner}</td><td>${v.op_type==='mine'?'操盤':'—'}</td><td>${errTxt}</td></tr>`;
   }).join('');
-  const valid=rows.filter(function(r){return validateRow(r,0).errors.length===0;}).length;
+  const valid=rows.filter(r=>validateRow(r).errors.length===0).length;
   g('preview-title').textContent='預覽：共 '+rows.length+' 筆，'+valid+' 筆正常'+(rows.length-valid>0?'，'+(rows.length-valid)+' 筆有問題':'');
   g('import-btn').disabled=hasErr;
   g('import-preview').style.display='block';
   importData=rows;
 }
-
-function onFileSelect(e){ const file=e.target.files[0]; if(file) readFile(file); }
-function onDragOver(e){ e.preventDefault(); g('drop-zone').classList.add('drag-over'); }
-function onDragLeave(e){ g('drop-zone').classList.remove('drag-over'); }
-function onDrop(e){ e.preventDefault(); g('drop-zone').classList.remove('drag-over'); const file=e.dataTransfer.files[0]; if(file) readFile(file); }
-
-function readFile(file){
-  const reader=new FileReader();
-  reader.onload=function(e){ showPreview(parseCSV(e.target.result)); };
-  reader.readAsText(file,'UTF-8');
-}
-
-function clearImport(){ g('import-preview').style.display='none'; g('csv-input').value=''; importData=[]; }
-
+function onFileSelect(e){const file=e.target.files[0];if(file)readFile(file)}
+function onDragOver(e){e.preventDefault();g('drop-zone').classList.add('drag-over')}
+function onDragLeave(e){g('drop-zone').classList.remove('drag-over')}
+function onDrop(e){e.preventDefault();g('drop-zone').classList.remove('drag-over');const file=e.dataTransfer.files[0];if(file)readFile(file)}
+function readFile(file){const reader=new FileReader();reader.onload=e=>showPreview(parseCSV(e.target.result));reader.readAsText(file,'UTF-8')}
+function clearImport(){g('import-preview').style.display='none';g('csv-input').value='';importData=[]}
 async function importCSV(){
-  const valid=importData.filter(function(r){return validateRow(r,0).errors.length===0;}).map(function(r){return validateRow(r,0);});
-  if(!valid.length) return;
-  const btn=g('import-btn'); btn.disabled=true; btn.textContent='匯入中...';
-  const pb=document.createElement('div'); pb.className='progress-bar'; pb.style.display='block'; pb.style.margin='10px 0';
-  const pf=document.createElement('div'); pf.className='progress-fill'; pb.appendChild(pf);
+  const valid=importData.filter(r=>validateRow(r).errors.length===0).map(r=>validateRow(r));
+  if(!valid.length)return;
+  const btn=g('import-btn');btn.disabled=true;btn.textContent='匯入中...';
+  const pb=document.createElement('div');pb.className='progress-bar';pb.style.display='block';pb.style.margin='10px 0';
+  const pf=document.createElement('div');pf.className='progress-fill';pb.appendChild(pf);
   g('import-preview').insertBefore(pb,g('import-preview').firstChild);
   try{
     for(let i=0;i<valid.length;i++){
       await api('POST','stocks',{ticker:valid[i].ticker,market:valid[i].market,shares:valid[i].shares,cost:valid[i].cost,owner:valid[i].owner,op_type:valid[i].op_type});
       pf.style.width=Math.round((i+1)/valid.length*100)+'%';
     }
-    await loadStocks();
-    clearImport();
-    await fetchAll();
-    alert('成功匯入 '+valid.length+' 筆！');
-  }catch(e){ alert('匯入失敗：'+e.message); }
-  btn.disabled=false; btn.textContent='✓ 確認匯入';
+    await loadStocks();clearImport();await fetchAll();alert('成功匯入 '+valid.length+' 筆！');
+  }catch(e){alert('匯入失敗：'+e.message);}
+  btn.disabled=false;btn.textContent='✓ 確認匯入';pb.style.display='none';
 }
 
+// Manual add
 function makeRow(idx){
-  const tr=document.createElement('tr'); tr.id='row-'+idx;
+  const tr=document.createElement('tr');tr.id='row-'+idx;
   tr.innerHTML='<td><select id="own-'+idx+'" onchange="toggleOp('+idx+')" style="width:100%"><option value="dad">爸爸</option><option value="mom">媽媽</option><option value="me">我</option></select></td>'+
     '<td><select id="mkt-'+idx+'" style="width:100%"><option value="tw">台股</option><option value="us">美股</option></select></td>'+
     '<td><input type="text" id="tkr-'+idx+'" placeholder="2330" style="text-transform:uppercase"></td>'+
@@ -461,59 +477,60 @@ function makeRow(idx){
     '<td><button class="del-btn" onclick="removeRow('+idx+')">✕</button></td>';
   return tr;
 }
-function toggleOp(idx){ const own=g('own-'+idx).value,sel=g('ot-'+idx),na=g('ot-na-'+idx); if(own==='dad'){sel.style.display='block';na.style.display='none';}else{sel.style.display='none';na.style.display='inline';} }
-function addRow(){ const tbody=g('batch-tbody'),idx=rowCount++; tbody.appendChild(makeRow(idx)); toggleOp(idx); }
-function removeRow(idx){ const row=g('row-'+idx); if(row) row.remove(); if(g('batch-tbody').rows.length===0) addRow(); }
-function openModal(){ rowCount=0;g('batch-tbody').innerHTML='';g('batch-err').style.display='none';g('progress-bar').style.display='none';addRow();addRow();addRow();g('modal').classList.add('open'); }
-function closeModal(){ g('modal').classList.remove('open'); }
-
+function toggleOp(idx){const own=g('own-'+idx).value,sel=g('ot-'+idx),na=g('ot-na-'+idx);if(own==='dad'){sel.style.display='block';na.style.display='none';}else{sel.style.display='none';na.style.display='inline';}}
+function addRow(){const tbody=g('batch-tbody'),idx=rowCount++;tbody.appendChild(makeRow(idx));toggleOp(idx)}
+function removeRow(idx){const row=g('row-'+idx);if(row)row.remove();if(g('batch-tbody').rows.length===0)addRow()}
+function openModal(){rowCount=0;g('batch-tbody').innerHTML='';g('batch-err').style.display='none';g('progress-bar').style.display='none';addRow();addRow();addRow();g('modal').classList.add('open')}
+function closeModal(){g('modal').classList.remove('open')}
 async function saveAll(){
-  const errEl=g('batch-err'); errEl.style.display='none';
-  const rows=g('batch-tbody').rows; const items=[];
+  const errEl=g('batch-err');errEl.style.display='none';
+  const rows=g('batch-tbody').rows;const items=[];
   for(let i=0;i<rows.length;i++){
     const id=rows[i].id.replace('row-','');
     const tkr=g('tkr-'+id).value.trim().toUpperCase();
     const shr=parseFloat(g('shr-'+id).value);
     const cst=parseFloat(g('cst-'+id).value);
-    if(!tkr&&!g('shr-'+id).value&&!g('cst-'+id).value) continue;
-    if(!tkr){errEl.textContent='第'+(i+1)+'列：請輸入股票代號';errEl.style.display='block';return;}
-    if(!shr||shr<=0){errEl.textContent='第'+(i+1)+'列（'+tkr+'）：請輸入正確股數';errEl.style.display='block';return;}
-    if(isNaN(cst)||cst<0){errEl.textContent='第'+(i+1)+'列（'+tkr+'）：請輸入成本';errEl.style.display='block';return;}
+    if(!tkr&&!g('shr-'+id).value&&!g('cst-'+id).value)continue;
+    if(!tkr){errEl.textContent='第'+(i+1)+'列：請輸入股票代號';errEl.style.display='block';return}
+    if(!shr||shr<=0){errEl.textContent='第'+(i+1)+'列（'+tkr+'）：請輸入正確股數';errEl.style.display='block';return}
+    if(isNaN(cst)||cst<0){errEl.textContent='第'+(i+1)+'列（'+tkr+'）：請輸入成本';errEl.style.display='block';return}
     const own=g('own-'+id).value,mkt=g('mkt-'+id).value,ot=own==='dad'?g('ot-'+id).value:'none';
     items.push({ticker:tkr,market:mkt,shares:shr,cost:cst,owner:own,op_type:ot});
   }
-  if(!items.length){errEl.textContent='請至少填寫一筆資料';errEl.style.display='block';return;}
-  const saveBtn=g('save-btn'); saveBtn.disabled=true; saveBtn.textContent='儲存中...';
-  const pb=g('progress-bar'),pf=g('progress-fill'); pb.style.display='block'; pf.style.width='0%';
+  if(!items.length){errEl.textContent='請至少填寫一筆資料';errEl.style.display='block';return}
+  const saveBtn=g('save-btn');saveBtn.disabled=true;saveBtn.textContent='儲存中...';
+  const pb=g('progress-bar'),pf=g('progress-fill');pb.style.display='block';pf.style.width='0%';
   try{
-    for(let i=0;i<items.length;i++){ await api('POST','stocks',items[i]); pf.style.width=Math.round((i+1)/items.length*100)+'%'; }
-    await loadStocks(); closeModal(); await fetchAll();
+    for(let i=0;i<items.length;i++){await api('POST','stocks',items[i]);pf.style.width=Math.round((i+1)/items.length*100)+'%';}
+    await loadStocks();closeModal();await fetchAll();
   }catch(e){errEl.textContent='儲存失敗：'+e.message;errEl.style.display='block';}
-  saveBtn.disabled=false; saveBtn.textContent='全部儲存'; pb.style.display='none';
+  saveBtn.disabled=false;saveBtn.textContent='全部儲存';pb.style.display='none';
 }
 
-async function delStock(id){ if(!confirm('確定刪除？')) return; try{await api('DELETE','stocks?id=eq.'+id);await loadStocks();renderAll();}catch(e){alert('刪除失敗：'+e.message);} }
-
+async function delStock(id){
+  if(!confirm('確定刪除這筆？'))return;
+  try{await api('DELETE','stocks?id=eq.'+id);await loadStocks();renderAll();}
+  catch(e){alert('刪除失敗：'+e.message);}
+}
 async function clearAll(){
-  if(!confirm('確定清除全部持股？這個動作無法復原。')) return;
-  try{ await api('DELETE','stocks?id=neq.00000000-0000-0000-0000-000000000000'); await loadStocks(); renderAll(); setStatus('已清除全部',false); }
-  catch(e){ alert('清除失敗：'+e.message); }
+  if(!confirm('確定清除全部持股？這個動作無法復原。'))return;
+  try{await api('DELETE','stocks?id=neq.00000000-0000-0000-0000-000000000000');await loadStocks();renderAll();setStatus('已清除全部',false);}
+  catch(e){alert('清除失敗：'+e.message);}
 }
-
 function exportCSV(){
   const rows=[['ticker','market','shares','cost','owner','op_type']];
-  stocks.forEach(function(s){ rows.push([s.ticker,s.market,s.shares,s.cost,s.owner,s.op_type]); });
+  stocks.forEach(s=>rows.push([s.ticker,s.market,s.shares,s.cost,s.owner,s.op_type]));
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8'}));
-  a.download='family-portfolio.csv'; a.click();
+  a.download='family-portfolio.csv';a.click();
 }
 
-(async function(){
+(async()=>{
   setStatus('載入中...',false);
-  try{ await loadStocks(); renderAll(); if(stocks.length) await fetchAll(); else setStatus('尚無持股',false); }
-  catch(e){ setStatus('載入失敗，請確認 Supabase 設定',true); }
+  try{await loadStocks();renderAll();if(stocks.length)await fetchAll();else setStatus('尚無持股',false);}
+  catch(e){setStatus('載入失敗，請確認 Supabase 設定',true);}
 })();
-setInterval(async function(){ if(stocks.length) await fetchAll(); },5*60*1000);
+setInterval(async()=>{if(stocks.length)await fetchAll();},5*60*1000);
 </script>
 </body>
 </html>
