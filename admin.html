@@ -117,7 +117,7 @@ tr.detail-row:last-of-type td{border-bottom:none}
   <h1>家族投資組合 <span class="admin-badge">管理員</span></h1>
   <div class="top-right">
     <div class="status"><span class="sdot" id="sdot"></span><span id="stxt">載入中...</span></div>
-    <button class="btn" onclick="fetchAll()"><span id="ricon">↻</span> 更新報價</button>
+    <button class="btn" onclick="fetchAll()"><span id="ricon">↻</span> 更新最近收盤價</button>
     <button class="btn btn-primary" onclick="openModal()">＋ 新增持股</button>
   </div>
 </div>
@@ -254,6 +254,7 @@ function displayName(ticker,market,storedName,sym){
 }
 
 let stocks=[],prices={},quoteNames={},curFilter='all',rowCount=0,importData=[],expandedGroups={};
+const QUOTE_CACHE_KEY='portfolio_last_close_cache_v1';
 
 function g(id){return document.getElementById(id)}
 async function api(method,path,body){
@@ -285,7 +286,44 @@ function cleanPrice(v){
   const n=parseFloat(String(v).replace(/,/g,''));
   return isNaN(n)||n<=0?null:n;
 }
+function latestCloseFromChart(d){
+  try{
+    const res=d.chart&&d.chart.result&&d.chart.result[0];
+    if(!res)return null;
+    const meta=res.meta||{};
+    const prev=cleanPrice(meta.previousClose);
+    if(prev)return prev;
+    const closes=res.indicators&&res.indicators.quote&&res.indicators.quote[0]&&res.indicators.quote[0].close;
+    if(Array.isArray(closes)){
+      for(let i=closes.length-1;i>=0;i--){
+        const c=cleanPrice(closes[i]);
+        if(c)return c;
+      }
+    }
+  }catch(e){}
+  return null;
+}
+function readQuoteCache(){
+  try{return JSON.parse(localStorage.getItem(QUOTE_CACHE_KEY)||'{}')||{};}catch(e){return {};}
+}
+function writeQuoteCache(sym,data){
+  try{
+    const c=readQuoteCache();
+    c[sym]={price:data.price,name:data.name||'',source:data.source||'',updated_at:new Date().toISOString()};
+    localStorage.setItem(QUOTE_CACHE_KEY,JSON.stringify(c));
+  }catch(e){}
+}
+function cachedQuote(sym){
+  const c=readQuoteCache();
+  return c[sym]&&c[sym].price?{price:c[sym].price,name:c[sym].name||'',source:'上次收盤快取'}:null;
+}
 async function fetchTWQuote(ticker){
+  const sym=ticker+'.TW';
+  try{
+    const d=await fetchJson('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=5d');
+    const price=latestCloseFromChart(d);
+    if(price)return{price,name:(twName(ticker)||ticker),source:'Yahoo最近收盤'};
+  }catch(e){}
   const codes=['tse_'+ticker+'.tw','otc_'+ticker+'.tw'];
   for(const code of codes){
     try{
@@ -293,26 +331,20 @@ async function fetchTWQuote(ticker){
       const d=await fetchJson(url);
       const item=d.msgArray&&d.msgArray[0];
       if(item){
-        const price=cleanPrice(item.z)||cleanPrice(item.y)||cleanPrice(item.o);
-        if(price){return{price,name:item.n||item.nf||ticker,source:code.startsWith('tse_')?'證交所':'櫃買中心'};}
+        const price=cleanPrice(item.y)||cleanPrice(item.z)||cleanPrice(item.o);
+        if(price){return{price,name:item.n||item.nf||ticker,source:code.startsWith('tse_')?'證交所昨收':'櫃買中心昨收'};}
       }
     }catch(e){}
   }
-  try{
-    const sym=ticker+'.TW';
-    const d=await fetchJson('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=1d');
-    const m=d.chart&&d.chart.result&&d.chart.result[0]&&d.chart.result[0].meta;
-    const price=m&&(m.regularMarketPrice||m.previousClose);
-    if(price!=null)return{price,name:(twName(ticker)||ticker),source:'Yahoo'};
-  }catch(e){}
-  return null;
+  return cachedQuote(sym);
 }
 async function fetchYahooQuote(sym){
   try{
-    const d=await fetchJson('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=1d');
-    const m=d.chart&&d.chart.result&&d.chart.result[0]&&d.chart.result[0].meta;
-    const price=m&&(m.regularMarketPrice||m.previousClose);
-    if(price!=null)return{price,name:(m.longName||m.shortName||sym),source:'Yahoo'};
+    const d=await fetchJson('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=5d');
+    const res=d.chart&&d.chart.result&&d.chart.result[0];
+    const m=res&&res.meta||{};
+    const price=latestCloseFromChart(d);
+    if(price)return{price,name:(m.longName||m.shortName||sym),source:'Yahoo最近收盤'};
   }catch(e){}
   try{
     const stooq=sym.toLowerCase()+'.us';
@@ -321,10 +353,10 @@ async function fetchYahooQuote(sym){
     if(lines.length>1){
       const cols=lines[1].split(',');
       const close=cleanPrice(cols[6]);
-      if(close)return{price:close,name:sym,source:'Stooq'};
+      if(close)return{price:close,name:sym,source:'Stooq收盤'};
     }
   }catch(e){}
-  return null;
+  return cachedQuote(sym);
 }
 async function fetchQuoteForStock(s){
   return s.market==='tw'?fetchTWQuote(s.ticker):fetchYahooQuote(s.ticker);
@@ -332,19 +364,19 @@ async function fetchQuoteForStock(s){
 async function fetchAll(){
   if(!stocks.length){renderAll();return}
   const ic=g('ricon');ic.textContent='⟳';ic.className='spin';
-  setStatus('更新報價中...',false);
+  setStatus('更新最近收盤價中...',false);
   const unique={};
   stocks.forEach(s=>{unique[getSymbol(s)]={ticker:s.ticker,market:s.market};});
   const items=Object.entries(unique);
   let ok=0,fail=0,failed=[];
   await Promise.all(items.map(async ([sym,s])=>{
     const q=await fetchQuoteForStock(s);
-    if(q&&q.price!=null){prices[sym]=q.price;quoteNames[sym]=(s.market==='tw'?(twName(s.ticker)||q.name||sym):(q.name||sym));ok++;}
+    if(q&&q.price!=null){prices[sym]=q.price;quoteNames[sym]=(s.market==='tw'?(twName(s.ticker)||q.name||sym):(q.name||sym));writeQuoteCache(sym,q);ok++;}
     else{fail++;failed.push(sym);}
   }));
   ic.className='';ic.textContent='↻';
   const now=new Date(),t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  setStatus(fail===0?'已更新 '+t:ok+'成功/'+fail+'失敗：'+failed.join('、'),fail>0);
+  setStatus(fail===0?'已更新最近收盤 '+t:ok+'成功/'+fail+'失敗：'+failed.join('、'),fail>0);
   renderAll();
 }
 
@@ -455,7 +487,7 @@ function renderTable(){
       <td class="r ${cls}">${pnl!=null?sg+'$'+fmt(Math.abs(pnl)):'—'}</td>
       <td class="r ${cls}">${pct!=null?sg+pct.toFixed(1)+'%':'—'}</td>
       <td style="color:var(--text2)">${ownerLabel[grp.owner]||grp.owner}</td>
-      <td class="r"><label onclick="event.stopPropagation()" style="font-size:11px;color:var(--text2);white-space:nowrap"><input type="checkbox" ${isDCA?'checked':''} onclick="event.stopPropagation()" onchange="event.stopPropagation();toggleGroupDCA('${gkey}',this.checked)"> 定期定額</label>${hasBatches?'':` <button onclick="event.stopPropagation();delStock('${first.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px" title="刪除">🗑</button>`}</td>
+      <td class="r"><label onclick="event.stopPropagation()" style="font-size:11px;color:var(--text2);white-space:nowrap"><input type="checkbox" ${isDCA?'checked':''} ${HAS_DCA_COLUMN?'':'disabled'} onclick="event.stopPropagation()" onchange="event.stopPropagation();toggleGroupDCA('${gkey}',this.checked)"> 定期定額</label>${hasBatches?'':` <button onclick="event.stopPropagation();delStock('${first.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px" title="刪除">🗑</button>`}</td>
     </tr>`;
 
     if(hasBatches&&isOpen){
@@ -545,11 +577,11 @@ async function importCSV(){
   g('import-preview').insertBefore(pb,g('import-preview').firstChild);
   try{
     for(let i=0;i<valid.length;i++){
-      await api('POST','stocks',{ticker:valid[i].ticker,name:valid[i].name,buy_date:valid[i].buy_date||null,market:valid[i].market,shares:valid[i].shares,cost:valid[i].cost,owner:valid[i].owner,op_type:valid[i].op_type,is_dca:valid[i].is_dca});
+      await api('POST','stocks',payloadForDB({ticker:valid[i].ticker,name:valid[i].name,buy_date:valid[i].buy_date||null,market:valid[i].market,shares:valid[i].shares,cost:valid[i].cost,owner:valid[i].owner,op_type:valid[i].op_type,is_dca:valid[i].is_dca}));
       pf.style.width=Math.round((i+1)/valid.length*100)+'%';
     }
     await loadStocks();clearImport();await fetchAll();alert('成功匯入 '+valid.length+' 筆！');
-  }catch(e){alert('匯入失敗：'+e.message);}
+  }catch(e){if(isMissingDcaError(e)){HAS_DCA_COLUMN=false;alert(dcaHelpMessage());}else alert('匯入失敗：'+e.message);}
   btn.disabled=false;btn.textContent='✓ 確認匯入';pb.style.display='none';
 }
 
@@ -594,35 +626,38 @@ async function saveAll(){
   const saveBtn=g('save-btn');saveBtn.disabled=true;saveBtn.textContent='儲存中...';
   const pb=g('progress-bar'),pf=g('progress-fill');pb.style.display='block';pf.style.width='0%';
   try{
-    for(let i=0;i<items.length;i++){await api('POST','stocks',items[i]);pf.style.width=Math.round((i+1)/items.length*100)+'%';}
+    for(let i=0;i<items.length;i++){await api('POST','stocks',payloadForDB(items[i]));pf.style.width=Math.round((i+1)/items.length*100)+'%';}
     await loadStocks();closeModal();await fetchAll();
-  }catch(e){errEl.textContent='儲存失敗：'+e.message;errEl.style.display='block';}
+  }catch(e){if(isMissingDcaError(e)){HAS_DCA_COLUMN=false;errEl.textContent='資料庫缺少 is_dca 欄位，定期定額無法儲存。請先到 Supabase SQL Editor 新增欄位。';alert(dcaHelpMessage());}else errEl.textContent='儲存失敗：'+e.message;errEl.style.display='block';}
   saveBtn.disabled=false;saveBtn.textContent='全部儲存';pb.style.display='none';
 }
 
 async function updateStock(id,patch){
-  await api('PATCH','stocks?id=eq.'+id,patch);
+  await api('PATCH','stocks?id=eq.'+id,payloadForDB(patch));
   const s=stocks.find(x=>x.id===id);
   if(s)Object.assign(s,patch);
   renderAll();
 }
-async function toggleDCA(id,checked){
-  try{await updateStock(id,{is_dca:checked});}
-  catch(e){alert('更新定期定額設定失敗：'+e.message);await loadStocks();renderAll();}
-}
 async function toggleGroupDCA(key,checked){
+  if(!HAS_DCA_COLUMN){
+    alert(dcaHelpMessage());
+    renderAll();
+    return;
+  }
   const targets=stocks.filter(s=>(s.ticker+'|'+s.owner)===key);
   const ids=targets.map(s=>s.id);
   if(!ids.length)return;
 
-  // 先讓畫面立即改變，避免點擊收合列時看起來沒有勾選成功
+  const oldVals=targets.map(s=>s.is_dca);
   targets.forEach(s=>s.is_dca=checked);
   renderAll();
 
   try{
     await Promise.all(ids.map(id=>api('PATCH','stocks?id=eq.'+encodeURIComponent(id),{is_dca:checked})));
   }catch(e){
-    alert('更新定期定額設定失敗：請確認 Supabase stocks 表已有 is_dca 欄位，且允許 UPDATE。\n\n原始錯誤：'+e.message);
+    targets.forEach((s,i)=>s.is_dca=oldVals[i]);
+    if(isMissingDcaError(e)){HAS_DCA_COLUMN=false;alert(dcaHelpMessage());}
+    else alert('更新定期定額設定失敗：'+e.message);
     await loadStocks();
     renderAll();
   }
@@ -647,7 +682,7 @@ function exportCSV(){
 
 (async()=>{
   setStatus('載入中...',false);
-  try{await loadStocks();renderAll();if(stocks.length)await fetchAll();else setStatus('尚無持股',false);}
+  try{await detectDCAColumn();await loadStocks();renderAll();if(stocks.length)await fetchAll();else setStatus(HAS_DCA_COLUMN?'尚無持股':'缺少 is_dca 欄位',!HAS_DCA_COLUMN);}
   catch(e){setStatus('載入失敗，請確認 Supabase 設定',true);}
 })();
 setInterval(async()=>{if(stocks.length)await fetchAll();},5*60*1000);
