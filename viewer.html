@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家族投資組合</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f7f7f5; --bg3: #f0efe8;
+  --text: #1a1a18; --text2: #6b6b66; --text3: #9e9e99;
+  --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+  --pos: #1D9E75; --neg: #D85A30;
+  --rad-md: 8px; --rad-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b; --text: #f0efe8; --text2: #9e9e99; --text3: #6b6b66; --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18); }
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+.page { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem; }
+.top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+.top-bar h1 { font-size: 20px; font-weight: 500; }
+.top-right { display: flex; align-items: center; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: var(--rad-md); font-size: 13px; cursor: pointer; border: 0.5px solid var(--border2); background: var(--bg); color: var(--text2); }
+.btn:hover { background: var(--bg2); }
+.status { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+.sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--pos); flex-shrink: 0; }
+.sdot.err { background: var(--neg); }
+.ro-badge { background: #E1F5EE; color: #085041; font-size: 11px; padding: 2px 8px; border-radius: var(--rad-md); font-weight: 500; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.metric { background: var(--bg); border-radius: var(--rad-md); padding: .9rem 1rem; border: 0.5px solid var(--border); }
+.metric .lbl { font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+.metric .val { font-size: 20px; font-weight: 500; }
+.metric .sub { font-size: 12px; margin-top: 3px; }
+.pos { color: var(--pos); } .neg { color: var(--neg); } .neu { color: var(--text2); }
+.sec-title { font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+.acc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+.acc-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rad-lg); padding: 1rem 1.1rem; }
+.acc-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 13px; flex-shrink: 0; }
+.av-b { background: #E6F1FB; color: #0C447C; } .av-t { background: #E1F5EE; color: #085041; } .av-a { background: #FAEEDA; color: #633806; }
+.acc-name { font-size: 14px; font-weight: 500; } .acc-sub { font-size: 11px; color: var(--text2); }
+.acc-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.acc-row .k { font-size: 12px; color: var(--text2); } .acc-row .v { font-size: 13px; font-weight: 500; }
+.divider { border: none; border-top: 0.5px solid var(--border); margin: 10px 0; }
+.op-box { background: #FAEEDA; border-radius: var(--rad-md); padding: 8px 10px; margin-top: 8px; }
+.op-box .olbl { font-size: 11px; color: #633806; margin-bottom: 2px; }
+.op-box .oval { font-size: 14px; font-weight: 500; }
+.my-panel { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rad-lg); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+.my-panel-head { display: flex; align-items: center; margin-bottom: 12px; }
+.my-panel-head h2 { font-size: 15px; font-weight: 500; }
+.op-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 8px; }
+.op-m { background: var(--bg2); border-radius: var(--rad-md); padding: .7rem .9rem; }
+.op-m .lbl { font-size: 11px; color: var(--text2); margin-bottom: 3px; }
+.op-m .val { font-size: 16px; font-weight: 500; }
+.toolbar { display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap; }
+.tab { padding: 4px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; color: var(--text2); border: none; background: transparent; }
+.tab.active { background: var(--bg); color: var(--text); font-weight: 500; box-shadow: 0 0 0 0.5px var(--border2); }
+.tbl-wrap { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rad-lg); overflow: hidden; margin-bottom: 2rem; overflow-x: auto; }
+table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 12px; }
+th { background: var(--bg2); padding: 7px 10px; text-align: left; font-weight: 500; color: var(--text2); font-size: 11px; border-bottom: 0.5px solid var(--border); }
+th.r, td.r { text-align: right; }
+td { padding: 9px 10px; border-bottom: 0.5px solid var(--border); color: var(--text); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg2); }
+.badge { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 4px; font-weight: 500; vertical-align: middle; }
+.tw-b { background: #E1F5EE; color: #085041; } .us-b { background: #E6F1FB; color: #0C447C; } .op-b { background: #FAEEDA; color: #633806; }
+.empty { text-align: center; color: var(--text3); padding: 3rem; }
+.spin { animation: spin 1s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.footer { text-align: center; font-size: 12px; color: var(--text3); margin-top: 1rem; }
+.auto-badge { font-size: 11px; color: var(--text3); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="top-bar">
+  <h1>家族投資組合 <span class="ro-badge">查看</span></h1>
+  <div class="top-right">
+    <div class="status"><span class="sdot" id="sdot"></span><span id="stxt">載入中...</span></div>
+    <button class="btn" onclick="init()"><span id="ricon">↻</span> 重新整理</button>
+  </div>
+</div>
+
+<div class="summary-grid">
+  <div class="metric"><div class="lbl">總資產（台幣）</div><div class="val" id="s-total">—</div></div>
+  <div class="metric"><div class="lbl">總損益</div><div class="val" id="s-pnl">—</div><div class="sub" id="s-pct"></div></div>
+  <div class="metric"><div class="lbl">持股檔數</div><div class="val" id="s-count">—</div><div class="sub" id="s-mkt"></div></div>
+  <div class="metric"><div class="lbl">上次更新</div><div class="val" style="font-size:13px" id="s-time">—</div></div>
+</div>
+
+<div class="my-panel">
+  <div class="my-panel-head"><span style="margin-right:8px">📈</span><h2>操盤績效（爸爸帳戶）</h2></div>
+  <div class="op-grid">
+    <div class="op-m"><div class="lbl">投入成本</div><div class="val" id="op-cost">—</div></div>
+    <div class="op-m"><div class="lbl">現在市值</div><div class="val" id="op-val">—</div></div>
+    <div class="op-m"><div class="lbl">操盤損益</div><div class="val" id="op-pnl">—</div><div style="font-size:11px;margin-top:2px" id="op-pct"></div></div>
+  </div>
+  <div style="font-size:11px;color:var(--text2)">只計算標記「我幫他買的」的持股批次</div>
+</div>
+
+<div class="sec-title">各帳戶概況</div>
+<div class="acc-grid">
+  <div class="acc-card">
+    <div class="acc-head"><div class="avatar av-b">爸</div><div><div class="acc-name">爸爸</div><div class="acc-sub" id="a-dad-n">0 檔</div></div></div>
+    <div class="acc-row"><span class="k">市值</span><span class="v" id="a-dad-val">—</span></div>
+    <div class="acc-row"><span class="k">全帳損益</span><span class="v" id="a-dad-pnl">—</span></div>
+    <hr class="divider">
+    <div class="op-box"><div class="olbl">操盤的部分</div><div class="oval" id="a-dad-op">—</div></div>
+  </div>
+  <div class="acc-card">
+    <div class="acc-head"><div class="avatar av-t">媽</div><div><div class="acc-name">媽媽</div><div class="acc-sub" id="a-mom-n">0 檔</div></div></div>
+    <div class="acc-row"><span class="k">市值</span><span class="v" id="a-mom-val">—</span></div>
+    <div class="acc-row"><span class="k">損益</span><span class="v" id="a-mom-pnl">—</span></div>
+    <hr class="divider">
+    <div class="acc-row"><span class="k">成本</span><span class="v" id="a-mom-cost">—</span></div>
+  </div>
+  <div class="acc-card">
+    <div class="acc-head"><div class="avatar av-a">我</div><div><div class="acc-name">我</div><div class="acc-sub" id="a-me-n">0 檔</div></div></div>
+    <div class="acc-row"><span class="k">市值</span><span class="v" id="a-me-val">—</span></div>
+    <div class="acc-row"><span class="k">損益</span><span class="v" id="a-me-pnl">—</span></div>
+    <hr class="divider">
+    <div class="acc-row"><span class="k">成本</span><span class="v" id="a-me-cost">—</span></div>
+  </div>
+</div>
+
+<div class="sec-title">持股明細</div>
+<div class="toolbar">
+  <button class="tab active" onclick="filter('all',this)">全部</button>
+  <button class="tab" onclick="filter('tw',this)">台股</button>
+  <button class="tab" onclick="filter('us',this)">美股</button>
+</div>
+<div class="tbl-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th>
+        <th class="r">市值(台幣)</th><th class="r">損益(台幣)</th><th class="r">損益%</th><th>持有人</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"><tr><td colspan="8" class="empty">載入中...</td></tr></tbody>
+  </table>
+</div>
+
+<div class="footer">報價每 5 分鐘自動更新・僅供參考・不構成投資建議</div>
+
+</div>
+<script>
+const SUPABASE_URL = 'https://nqauumyfpdqkkqfjxury.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xYXV1bXlmcGRxa2txZmp4dXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mjk4MDYsImV4cCI6MjA5NTEwNTgwNn0.j-Ql0_eDLiCLRDyEzbzjVtq4mw7ORdk9eLniDR7zyow';
+const RATE = 32.5;
+let stocks = [], prices = {}, curFilter = 'all';
+
+async function loadStocks() {
+  const r = await fetch(SUPABASE_URL + '/rest/v1/stocks?select=*&order=created_at.asc', {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+  });
+  stocks = await r.json();
+}
+
+function getSymbol(s) { return s.market === 'tw' ? s.ticker + '.TW' : s.ticker; }
+function getMV(s) { const p = prices[getSymbol(s)]; if (!p) return null; return (s.market==='us'?p*RATE:p)*s.shares; }
+function getCostTWD(s) { return (s.market==='us'?s.cost*RATE:s.cost)*s.shares; }
+function fmt(n) { return Math.round(n).toLocaleString('zh-TW'); }
+function pnlCls(v) { return v >= 0 ? 'pos' : 'neg'; }
+function sign(v) { return v >= 0 ? '+' : ''; }
+function g(id) { return document.getElementById(id); }
+
+async function fetchPrice(sym) {
+  try {
+    const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=1d');
+    const d = await r.json();
+    const m = d.chart.result[0].meta;
+    return m.regularMarketPrice || m.previousClose;
+  } catch(e) { return null; }
+}
+
+async function fetchAll() {
+  if (!stocks.length) { renderAll(); return; }
+  const ic = g('ricon'); ic.className = 'spin';
+  setStatus('更新報價中...', false);
+  const syms = [...new Set(stocks.map(getSymbol))];
+  let ok = 0, fail = 0;
+  await Promise.all(syms.map(async function(sym) {
+    const p = await fetchPrice(sym);
+    if (p != null) { prices[sym] = p; ok++; } else fail++;
+  }));
+  ic.className = '';
+  const now = new Date();
+  const t = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  setStatus(fail===0?'已更新 '+t:ok+'成功/'+fail+'失敗', fail>0);
+  renderAll();
+}
+
+function setStatus(txt, err) { g('stxt').textContent=txt; g('sdot').className='sdot'+(err?' err':''); }
+
+function renderSummary() {
+  let totV=0, totC=0;
+  const acc = { dad:{v:0,c:0,myV:0,myC:0,n:0}, mom:{v:0,c:0,n:0}, me:{v:0,c:0,n:0} };
+  stocks.forEach(function(s) {
+    const mv=getMV(s); if(mv===null) return;
+    const c=getCostTWD(s); totV+=mv; totC+=c;
+    const o=s.owner; if(acc[o]){acc[o].v+=mv;acc[o].c+=c;acc[o].n++;}
+    if(o==='dad'&&s.op_type==='mine'){acc.dad.myV+=mv;acc.dad.myC+=c;}
+  });
+  const pnl=totV-totC, pct=totC>0?pnl/totC*100:0, sc=pnlCls(pnl);
+  g('s-total').textContent=stocks.length?'$'+fmt(totV):'—';
+  const pe=g('s-pnl'); pe.textContent=stocks.length?sign(pnl)+'$'+fmt(Math.abs(pnl)):'—'; pe.className='val '+sc;
+  const ppe=g('s-pct'); ppe.textContent=stocks.length?sign(pnl)+pct.toFixed(1)+'%':''; ppe.className='sub '+sc;
+  g('s-count').textContent=stocks.length;
+  g('s-mkt').textContent='台股 '+stocks.filter(s=>s.market==='tw').length+' ／ 美股 '+stocks.filter(s=>s.market==='us').length;
+  const now=new Date();
+  g('s-time').textContent=(now.getMonth()+1)+'/'+now.getDate()+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const myPnl=acc.dad.myV-acc.dad.myC, myPct=acc.dad.myC>0?myPnl/acc.dad.myC*100:0, ms=sign(myPnl), mc=pnlCls(myPnl);
+  g('op-cost').textContent=acc.dad.myC>0?'$'+fmt(acc.dad.myC):'—';
+  g('op-val').textContent=acc.dad.myV>0?'$'+fmt(acc.dad.myV):'—';
+  const ope=g('op-pnl'); ope.textContent=acc.dad.myC>0?ms+'$'+fmt(Math.abs(myPnl)):'—'; ope.className='val '+mc;
+  const oppe=g('op-pct'); oppe.textContent=acc.dad.myC>0?ms+myPct.toFixed(1)+'%':''; oppe.className=mc;
+  const dadPnl=acc.dad.v-acc.dad.c, dCls=pnlCls(dadPnl);
+  g('a-dad-n').textContent=acc.dad.n+' 檔';
+  g('a-dad-val').textContent=acc.dad.n?'$'+fmt(acc.dad.v):'—';
+  const dpe=g('a-dad-pnl'); dpe.textContent=acc.dad.n?sign(dadPnl)+'$'+fmt(Math.abs(dadPnl)):'—'; dpe.className='v '+dCls;
+  const dop=g('a-dad-op');
+  if(acc.dad.myC>0){dop.textContent=ms+'$'+fmt(Math.abs(myPnl))+' ('+ms+myPct.toFixed(1)+'%)';dop.className='oval '+mc;}
+  else{dop.textContent='—';dop.className='oval neu';}
+  [['mom','a-mom'],['me','a-me']].forEach(function(pair){
+    const o=pair[0],pre=pair[1],d=acc[o],opnl=d.v-d.c,oc=pnlCls(opnl);
+    g(pre+'-n').textContent=d.n+' 檔';
+    g(pre+'-val').textContent=d.n?'$'+fmt(d.v):'—';
+    const pe2=g(pre+'-pnl'); pe2.textContent=d.n?sign(opnl)+'$'+fmt(Math.abs(opnl)):'—'; pe2.className='v '+oc;
+    const ce=g(pre+'-cost'); if(ce) ce.textContent=d.n?'$'+fmt(d.c):'—';
+  });
+}
+
+function renderTable() {
+  const tbody=g('tbody');
+  const filtered=curFilter==='all'?stocks.slice():stocks.filter(s=>s.market===curFilter);
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="8" class="empty">尚無資料</td></tr>';return;}
+  const ownerLabel={dad:'爸爸',mom:'媽媽',me:'我'};
+  tbody.innerHTML=filtered.map(function(s){
+    const p=prices[getSymbol(s)],isUS=s.market==='us';
+    const mv=p?(isUS?p*RATE:p)*s.shares:null;
+    const c=getCostTWD(s),pnl=mv!=null?mv-c:null;
+    const pct=pnl!=null&&c>0?pnl/c*100:null;
+    const sg=sign(pnl||0),cls=pnl!=null?pnlCls(pnl):'neu';
+    const isMyOp=s.owner==='dad'&&s.op_type==='mine';
+    return '<tr>'+
+      '<td><span style="font-weight:500">'+s.ticker+'</span><span class="badge '+(isUS?'us-b':'tw-b')+'">'+(isUS?'美':'台')+'</span>'+(isMyOp?'<span class="badge op-b">操盤</span>':'')+'</td>'+
+      '<td class="r">'+(p?(isUS?'$'+p.toFixed(2):fmt(p)):'—')+'</td>'+
+      '<td class="r" style="color:var(--text2)">'+(isUS?'$'+s.cost.toFixed(2):fmt(s.cost))+'</td>'+
+      '<td class="r">'+fmt(s.shares)+'</td>'+
+      '<td class="r">'+(mv!=null?'$'+fmt(mv):'—')+'</td>'+
+      '<td class="r '+cls+'">'+(pnl!=null?sg+'$'+fmt(Math.abs(pnl)):'—')+'</td>'+
+      '<td class="r '+cls+'">'+(pct!=null?sg+pct.toFixed(1)+'%':'—')+'</td>'+
+      '<td style="color:var(--text2)">'+(ownerLabel[s.owner]||s.owner)+'</td>'+
+      '</tr>';
+  }).join('');
+}
+
+function renderAll(){renderSummary();renderTable();}
+
+function filter(f,btn){
+  curFilter=f;
+  document.querySelectorAll('.toolbar .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+async function init(){
+  setStatus('載入中...',false);
+  try{
+    await loadStocks();
+    renderAll();
+    if(stocks.length) await fetchAll();
+    else setStatus('尚無持股資料',false);
+  }catch(e){setStatus('載入失敗，請稍後再試',true);}
+}
+
+init();
+setInterval(async function(){
+  try{ await loadStocks(); await fetchAll(); }catch(e){}
+}, 5*60*1000);
+</script>
+</body>
+</html>
