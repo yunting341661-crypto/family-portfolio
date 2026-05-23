@@ -155,13 +155,13 @@ NVDA,NVIDIA,2026-05-24,us,20,98,me,none,false
 </div>
 
 <div class="my-panel">
-  <div class="my-panel-head"><span style="margin-right:8px">📈</span><h2>我的操盤績效（爸爸帳戶）</h2></div>
+  <div class="my-panel-head"><span style="margin-right:8px">📈</span><h2>爸爸帳戶標記績效</h2></div>
   <div class="op-grid">
     <div class="op-m"><div class="lbl">投入成本</div><div class="val" id="op-cost">—</div></div>
     <div class="op-m"><div class="lbl">現在市值</div><div class="val" id="op-val">—</div></div>
-    <div class="op-m"><div class="lbl">操盤損益</div><div class="val" id="op-pnl">—</div><div style="font-size:11px;margin-top:2px" id="op-pct"></div></div>
+    <div class="op-m"><div class="lbl">標記損益</div><div class="val" id="op-pnl">—</div><div style="font-size:11px;margin-top:2px" id="op-pct"></div></div>
   </div>
-  <div style="font-size:11px;color:var(--text2)">只計算標記「我幫他買的」的持股批次</div>
+  <div style="font-size:11px;color:var(--text2)">只計算後台標記納入績效的持股批次</div>
 </div>
 
 <div class="sec-title">各帳戶概況</div>
@@ -171,7 +171,7 @@ NVDA,NVIDIA,2026-05-24,us,20,98,me,none,false
     <div class="acc-row"><span class="k">市值</span><span class="v" id="a-dad-val">—</span></div>
     <div class="acc-row"><span class="k">全帳損益</span><span class="v" id="a-dad-pnl">—</span></div>
     <hr class="divider">
-    <div class="op-box"><div class="olbl">我操盤的部分</div><div class="oval" id="a-dad-op">—</div></div>
+    <div class="op-box"><div class="olbl">標記持股部分</div><div class="oval" id="a-dad-op">—</div></div>
   </div>
   <div class="acc-card">
     <div class="acc-head"><div class="avatar av-t">媽</div><div><div class="acc-name">媽媽</div><div class="acc-sub" id="a-mom-n">0 檔</div></div></div>
@@ -194,7 +194,7 @@ NVDA,NVIDIA,2026-05-24,us,20,98,me,none,false
     <button class="tab active" onclick="filter('all',this)">全部</button>
     <button class="tab" onclick="filter('tw',this)">台股</button>
     <button class="tab" onclick="filter('us',this)">美股</button>
-    <button class="tab" onclick="filter('myop',this)">我操盤</button>
+    <button class="tab" onclick="filter('myop',this)">標記持股</button>
   </div>
   <div style="display:flex;gap:8px">
     <button class="btn" onclick="clearAll()">🗑 清除全部</button>
@@ -406,7 +406,7 @@ function renderSummary(){
   const dpe=g('a-dad-pnl');dpe.textContent=acc.dad.n?sign(dadPnl)+'$'+fmt(Math.abs(dadPnl)):'—';dpe.className='v '+dCls;
   const dop=g('a-dad-op');
   if(acc.dad.myC>0){dop.textContent=ms+'$'+fmt(Math.abs(myPnl))+' ('+ms+myPct.toFixed(1)+'%)';dop.className='oval '+mc;}
-  else{dop.textContent='尚未設定操盤持股';dop.className='oval neu';}
+  else{dop.textContent='尚未設定標記持股';dop.className='oval neu';}
   [['mom','a-mom'],['me','a-me']].forEach(([o,pre])=>{
     const d=acc[o],opnl=d.v-d.c,oc=pnlCls(opnl);
     g(pre+'-n').textContent=d.n+' 檔';
@@ -455,7 +455,7 @@ function renderTable(){
       <td class="r ${cls}">${pnl!=null?sg+'$'+fmt(Math.abs(pnl)):'—'}</td>
       <td class="r ${cls}">${pct!=null?sg+pct.toFixed(1)+'%':'—'}</td>
       <td style="color:var(--text2)">${ownerLabel[grp.owner]||grp.owner}</td>
-      <td class="r"><label style="font-size:11px;color:var(--text2);white-space:nowrap"><input type="checkbox" ${isDCA?'checked':''} onchange="event.stopPropagation();toggleGroupDCA('${gkey}',this.checked)"> 定期定額</label>${hasBatches?'':` <button onclick="event.stopPropagation();delStock('${first.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px" title="刪除">🗑</button>`}</td>
+      <td class="r"><label onclick="event.stopPropagation()" style="font-size:11px;color:var(--text2);white-space:nowrap"><input type="checkbox" ${isDCA?'checked':''} onclick="event.stopPropagation()" onchange="event.stopPropagation();toggleGroupDCA('${gkey}',this.checked)"> 定期定額</label>${hasBatches?'':` <button onclick="event.stopPropagation();delStock('${first.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px" title="刪除">🗑</button>`}</td>
     </tr>`;
 
     if(hasBatches&&isOpen){
@@ -563,7 +563,7 @@ function makeRow(idx){
     '<td><input type="date" id="dt-'+idx+'"></td>'+
     '<td><input type="number" id="shr-'+idx+'" placeholder="1000" min="1"></td>'+
     '<td><input type="number" id="cst-'+idx+'" placeholder="750" step="0.01" min="0"></td>'+
-    '<td><select id="ot-'+idx+'" style="width:100%;display:none"><option value="old">舊持股（不計操盤）</option><option value="mine">我幫他買的（計入操盤）</option></select><span id="ot-na-'+idx+'" style="font-size:11px;color:var(--text3)">—</span></td>'+
+    '<td><select id="ot-'+idx+'" style="width:100%;display:none"><option value="old">一般持股（不計入標記績效）</option><option value="mine">納入標記績效</option></select><span id="ot-na-'+idx+'" style="font-size:11px;color:var(--text3)">—</span></td>'+
     '<td style="text-align:center"><input type="checkbox" id="dca-'+idx+'"></td>'+
     '<td><button class="del-btn" onclick="removeRow('+idx+')">✕</button></td>';
   return tr;
@@ -611,14 +611,18 @@ async function toggleDCA(id,checked){
   catch(e){alert('更新定期定額設定失敗：'+e.message);await loadStocks();renderAll();}
 }
 async function toggleGroupDCA(key,checked){
-  const ids=stocks.filter(s=>(s.ticker+'|'+s.owner)===key).map(s=>s.id);
+  const targets=stocks.filter(s=>(s.ticker+'|'+s.owner)===key);
+  const ids=targets.map(s=>s.id);
   if(!ids.length)return;
+
+  // 先讓畫面立即改變，避免點擊收合列時看起來沒有勾選成功
+  targets.forEach(s=>s.is_dca=checked);
+  renderAll();
+
   try{
-    await Promise.all(ids.map(id=>api('PATCH','stocks?id=eq.'+id,{is_dca:checked})));
-    stocks.forEach(s=>{if((s.ticker+'|'+s.owner)===key)s.is_dca=checked;});
-    renderAll();
+    await Promise.all(ids.map(id=>api('PATCH','stocks?id=eq.'+encodeURIComponent(id),{is_dca:checked})));
   }catch(e){
-    alert('更新定期定額設定失敗：'+e.message);
+    alert('更新定期定額設定失敗：請確認 Supabase stocks 表已有 is_dca 欄位，且允許 UPDATE。\n\n原始錯誤：'+e.message);
     await loadStocks();
     renderAll();
   }
