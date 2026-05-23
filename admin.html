@@ -125,11 +125,11 @@ tr.detail-row:last-of-type td{border-bottom:none}
 <div class="csv-box">
   <h3>📂 CSV 批次匯入</h3>
   <p>把所有持股整理成 CSV 檔，一次上傳全部。格式：</p>
-  <div class="csv-format">ticker,market,shares,cost,owner,op_type
-2330,tw,1000,750,dad,old
-NVDA,us,20,98,me,mine
-00919,tw,129,22.95,dad,mine</div>
-  <p>owner：<b>dad／mom／me</b>　market：<b>tw／us</b>　op_type：<b>mine</b>（操盤）或 <b>old／none</b></p>
+  <div class="csv-format">ticker,name,market,shares,cost,owner,op_type,is_dca
+2330,台積電,tw,1000,750,dad,old,false
+NVDA,NVIDIA,us,20,98,me,none,false
+00919,群益台灣精選高息,tw,129,22.95,dad,mine,true</div>
+  <p>owner：<b>dad／mom／me</b>　market：<b>tw／us</b>　op_type：<b>mine</b>（操盤）或 <b>old／none</b>　is_dca：<b>true／false</b></p>
   <div class="drop-zone" id="drop-zone" onclick="g('csv-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
     <p>點此選擇 CSV 檔，或直接拖拉進來</p>
     <div class="hint">支援 .csv，UTF-8 或 Big5 編碼</div>
@@ -143,7 +143,7 @@ NVDA,us,20,98,me,mine
         <button class="btn btn-primary" id="import-btn" onclick="importCSV()">✓ 確認匯入</button>
       </div>
     </div>
-    <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>代號</th><th>市場</th><th>股數</th><th>成本</th><th>持有人</th><th>操盤</th><th>狀態</th></tr></thead><tbody id="preview-tbody"></tbody></table></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>代號</th><th>名稱</th><th>市場</th><th>股數</th><th>成本</th><th>持有人</th><th>操盤</th><th>定期定額</th><th>狀態</th></tr></thead><tbody id="preview-tbody"></tbody></table></div>
   </div>
 </div>
 
@@ -225,7 +225,7 @@ NVDA,us,20,98,me,mine
     <div class="merr" id="batch-err"></div>
     <div style="overflow-x:auto">
       <table class="batch-table">
-        <thead><tr><th style="width:70px">持有人</th><th style="width:60px">市場</th><th style="width:90px">股票代號</th><th style="width:90px">股數</th><th style="width:90px">成本/股</th><th style="width:160px">爸爸帳戶屬性</th><th style="width:30px"></th></tr></thead>
+        <thead><tr><th style="width:70px">持有人</th><th style="width:60px">市場</th><th style="width:90px">股票代號</th><th style="width:140px">股票名稱</th><th style="width:90px">股數</th><th style="width:90px">成本/股</th><th style="width:160px">爸爸帳戶屬性</th><th style="width:80px">定期定額</th><th style="width:30px"></th></tr></thead>
         <tbody id="batch-tbody"></tbody>
       </table>
     </div>
@@ -258,8 +258,33 @@ function pnlCls(v){return v>=0?'pos':'neg'}
 function sign(v){return v>=0?'+':''}
 function setStatus(txt,err){g('stxt').textContent=txt;g('sdot').className='sdot'+(err?' err':'')}
 
+async function fetchJson(url){
+  try{const r=await fetch(url);if(!r.ok)throw new Error('direct failed');return await r.json();}
+  catch(e){const pr=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url));if(!pr.ok)throw new Error('proxy failed');return await pr.json();}
+}
+async function fetchText(url){
+  try{const r=await fetch(url);if(!r.ok)throw new Error('direct failed');return await r.text();}
+  catch(e){const pr=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url));if(!pr.ok)throw new Error('proxy failed');return await pr.text();}
+}
 async function fetchPrice(sym){
-  try{const r=await fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=1d');const d=await r.json();const m=d.chart.result[0].meta;return m.regularMarketPrice||m.previousClose;}catch(e){return null}
+  const urlsym=encodeURIComponent(sym);
+  try{
+    const d=await fetchJson('https://query1.finance.yahoo.com/v8/finance/chart/'+urlsym+'?interval=1d&range=1d');
+    const m=d.chart&&d.chart.result&&d.chart.result[0]&&d.chart.result[0].meta;
+    const p=m&&(m.regularMarketPrice||m.previousClose);
+    if(p!=null)return p;
+  }catch(e){}
+  try{
+    const stooq=sym.endsWith('.TW')?sym.replace('.TW','.tw'):sym.toLowerCase()+'.us';
+    const csv=await fetchText('https://stooq.com/q/l/?s='+encodeURIComponent(stooq)+'&f=sd2t2ohlcv&h&e=csv');
+    const lines=csv.trim().split(/\n/);
+    if(lines.length>1){
+      const cols=lines[1].split(',');
+      const close=parseFloat(cols[6]);
+      if(!isNaN(close)&&close>0)return close;
+    }
+  }catch(e){}
+  return null;
 }
 async function fetchAll(){
   if(!stocks.length){renderAll();return}
@@ -279,8 +304,10 @@ function groupStocks(list){
   const map={};
   list.forEach(s=>{
     const key=s.ticker+'|'+s.owner;
-    if(!map[key]) map[key]={ticker:s.ticker,market:s.market,owner:s.owner,op_type:s.op_type,batches:[],totalShares:0,totalCostTWD:0};
+    if(!map[key]) map[key]={ticker:s.ticker,name:s.name||'',market:s.market,owner:s.owner,op_type:s.op_type,is_dca:false,batches:[],totalShares:0,totalCostTWD:0};
     const g=map[key];
+    if(!g.name&&s.name)g.name=s.name;
+    if(s.is_dca===true||s.is_dca==='true')g.is_dca=true;
     g.batches.push(s);
     g.totalShares+=s.shares;
     g.totalCostTWD+=getCostTWD(s);
@@ -351,14 +378,15 @@ function renderTable(){
     const sg=sign(pnl||0),cls=pnl!=null?pnlCls(pnl):'neu';
     const avgCost=grp.totalShares>0?grp.totalCostTWD/grp.totalShares:0;
     const avgCostOrig=isUS?avgCost/RATE:avgCost;
-    const isDCA=grp.batches.length>1;
+    const hasBatches=grp.batches.length>1;
+    const isDCA=grp.is_dca===true;
     const isMyOp=grp.op_type==='mine';
     const gkey=grp.ticker+'|'+grp.owner;
     const isOpen=expandedGroups[gkey];
 
     html+=`<tr class="group-row" onclick="toggleGroup('${gkey}')">
-      <td><button class="expand-btn ${isDCA?(isOpen?'open':''):''}" style="${isDCA?'':'visibility:hidden'}">${isDCA?'▶':''}</button></td>
-      <td><span style="font-weight:500">${grp.ticker}</span><span class="badge ${isUS?'us-b':'tw-b'}">${isUS?'美':'台'}</span>${isMyOp?'<span class="badge op-b">操盤</span>':''}${isDCA?'<span class="badge dca-b">定期定額</span>':''}</td>
+      <td><button class="expand-btn ${hasBatches?(isOpen?'open':''):''}" style="${hasBatches?'':'visibility:hidden'}">${hasBatches?'▶':''}</button></td>
+      <td><span style="font-weight:500">${grp.ticker}</span><span class="badge ${isUS?'us-b':'tw-b'}">${isUS?'美':'台'}</span>${grp.name?'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+grp.name+'</div>':''}${isMyOp?'<span class="badge op-b">操盤</span>':''}${isDCA?'<span class="badge dca-b">定期定額</span>':''}</td>
       <td class="r">${p?(isUS?'$'+p.toFixed(2):fmt(p)):'—'}</td>
       <td class="r" style="color:var(--text2)">${isUS?'$'+avgCostOrig.toFixed(2):fmt(avgCostOrig)}</td>
       <td class="r">${fmt(grp.totalShares)}</td>
@@ -368,7 +396,7 @@ function renderTable(){
       <td style="color:var(--text2)">${ownerLabel[grp.owner]||grp.owner}</td>
     </tr>`;
 
-    if(isDCA&&isOpen){
+    if(hasBatches&&isOpen){
       grp.batches.forEach(s=>{
         const bCostOrig=isUS?s.cost:s.cost;
         const bMV=p?(isUS?p*RATE:p)*s.shares:null;
@@ -377,7 +405,7 @@ function renderTable(){
         const bsg=sign(bPnl||0),bcls=bPnl!=null?pnlCls(bPnl):'neu';
         html+=`<tr class="detail-row">
           <td></td>
-          <td style="padding-left:20px">批次 #${grp.batches.indexOf(s)+1}</td>
+          <td style="padding-left:20px">批次 #${grp.batches.indexOf(s)+1}${s.is_dca===true||s.is_dca==='true'?' ・定期定額':''}</td>
           <td class="r">${p?(isUS?'$'+p.toFixed(2):fmt(p)):'—'}</td>
           <td class="r">${isUS?'$'+bCostOrig.toFixed(2):fmt(bCostOrig)}</td>
           <td class="r">${fmt(s.shares)}</td>
@@ -415,17 +443,19 @@ function parseCSV(text){
 function validateRow(row){
   const errors=[];
   const ticker=(row.ticker||'').toUpperCase();
+  const name=(row.name||row.stock_name||'').trim();
   const market=(row.market||'').toLowerCase();
   const shares=parseFloat(row.shares);
   const cost=parseFloat(row.cost);
   const owner=(row.owner||'').toLowerCase();
   const opType=(row.op_type||'none').toLowerCase();
+  const isDca=['true','1','yes','y','是'].includes(String(row.is_dca||row.dca||'false').toLowerCase());
   if(!ticker)errors.push('缺少代號');
   if(!['tw','us'].includes(market))errors.push('market須為tw或us');
   if(isNaN(shares)||shares<=0)errors.push('股數無效');
   if(isNaN(cost)||cost<0)errors.push('成本無效');
   if(!['dad','mom','me'].includes(owner))errors.push('owner須為dad/mom/me');
-  return{ticker,market,shares,cost,owner,op_type:opType,errors};
+  return{ticker,name,market,shares,cost,owner,op_type:opType,is_dca:isDca,errors};
 }
 function showPreview(rows){
   const tbody=g('preview-tbody');
@@ -434,7 +464,7 @@ function showPreview(rows){
   tbody.innerHTML=rows.map((r,i)=>{
     const v=validateRow(r);if(v.errors.length)hasErr=true;
     const errTxt=v.errors.length?'❌ '+v.errors.join('、'):'✓ 正常';
-    return`<tr class="${v.errors.length?'row-err':''}"><td>${i+1}</td><td>${v.ticker||'—'}</td><td>${v.market==='tw'?'台股':'美股'}</td><td>${isNaN(v.shares)?'—':v.shares}</td><td>${isNaN(v.cost)?'—':v.cost}</td><td>${ownerLabel[v.owner]||v.owner}</td><td>${v.op_type==='mine'?'操盤':'—'}</td><td>${errTxt}</td></tr>`;
+    return`<tr class="${v.errors.length?'row-err':''}"><td>${i+1}</td><td>${v.ticker||'—'}</td><td>${v.name||'—'}</td><td>${v.market==='tw'?'台股':'美股'}</td><td>${isNaN(v.shares)?'—':v.shares}</td><td>${isNaN(v.cost)?'—':v.cost}</td><td>${ownerLabel[v.owner]||v.owner}</td><td>${v.op_type==='mine'?'操盤':'—'}</td><td>${v.is_dca?'是':'—'}</td><td>${errTxt}</td></tr>`;
   }).join('');
   const valid=rows.filter(r=>validateRow(r).errors.length===0).length;
   g('preview-title').textContent='預覽：共 '+rows.length+' 筆，'+valid+' 筆正常'+(rows.length-valid>0?'，'+(rows.length-valid)+' 筆有問題':'');
@@ -457,7 +487,7 @@ async function importCSV(){
   g('import-preview').insertBefore(pb,g('import-preview').firstChild);
   try{
     for(let i=0;i<valid.length;i++){
-      await api('POST','stocks',{ticker:valid[i].ticker,market:valid[i].market,shares:valid[i].shares,cost:valid[i].cost,owner:valid[i].owner,op_type:valid[i].op_type});
+      await api('POST','stocks',{ticker:valid[i].ticker,name:valid[i].name,market:valid[i].market,shares:valid[i].shares,cost:valid[i].cost,owner:valid[i].owner,op_type:valid[i].op_type,is_dca:valid[i].is_dca});
       pf.style.width=Math.round((i+1)/valid.length*100)+'%';
     }
     await loadStocks();clearImport();await fetchAll();alert('成功匯入 '+valid.length+' 筆！');
@@ -471,9 +501,11 @@ function makeRow(idx){
   tr.innerHTML='<td><select id="own-'+idx+'" onchange="toggleOp('+idx+')" style="width:100%"><option value="dad">爸爸</option><option value="mom">媽媽</option><option value="me">我</option></select></td>'+
     '<td><select id="mkt-'+idx+'" style="width:100%"><option value="tw">台股</option><option value="us">美股</option></select></td>'+
     '<td><input type="text" id="tkr-'+idx+'" placeholder="2330" style="text-transform:uppercase"></td>'+
+    '<td><input type="text" id="nam-'+idx+'" placeholder="台積電"></td>'+
     '<td><input type="number" id="shr-'+idx+'" placeholder="1000" min="1"></td>'+
     '<td><input type="number" id="cst-'+idx+'" placeholder="750" step="0.01" min="0"></td>'+
     '<td><select id="ot-'+idx+'" style="width:100%;display:none"><option value="old">舊持股（不計操盤）</option><option value="mine">我幫他買的（計入操盤）</option></select><span id="ot-na-'+idx+'" style="font-size:11px;color:var(--text3)">—</span></td>'+
+    '<td style="text-align:center"><input type="checkbox" id="dca-'+idx+'"></td>'+
     '<td><button class="del-btn" onclick="removeRow('+idx+')">✕</button></td>';
   return tr;
 }
@@ -488,6 +520,7 @@ async function saveAll(){
   for(let i=0;i<rows.length;i++){
     const id=rows[i].id.replace('row-','');
     const tkr=g('tkr-'+id).value.trim().toUpperCase();
+    const name=g('nam-'+id).value.trim();
     const shr=parseFloat(g('shr-'+id).value);
     const cst=parseFloat(g('cst-'+id).value);
     if(!tkr&&!g('shr-'+id).value&&!g('cst-'+id).value)continue;
@@ -495,7 +528,7 @@ async function saveAll(){
     if(!shr||shr<=0){errEl.textContent='第'+(i+1)+'列（'+tkr+'）：請輸入正確股數';errEl.style.display='block';return}
     if(isNaN(cst)||cst<0){errEl.textContent='第'+(i+1)+'列（'+tkr+'）：請輸入成本';errEl.style.display='block';return}
     const own=g('own-'+id).value,mkt=g('mkt-'+id).value,ot=own==='dad'?g('ot-'+id).value:'none';
-    items.push({ticker:tkr,market:mkt,shares:shr,cost:cst,owner:own,op_type:ot});
+    items.push({ticker:tkr,name:name,market:mkt,shares:shr,cost:cst,owner:own,op_type:ot,is_dca:g('dca-'+id).checked});
   }
   if(!items.length){errEl.textContent='請至少填寫一筆資料';errEl.style.display='block';return}
   const saveBtn=g('save-btn');saveBtn.disabled=true;saveBtn.textContent='儲存中...';
@@ -518,8 +551,8 @@ async function clearAll(){
   catch(e){alert('清除失敗：'+e.message);}
 }
 function exportCSV(){
-  const rows=[['ticker','market','shares','cost','owner','op_type']];
-  stocks.forEach(s=>rows.push([s.ticker,s.market,s.shares,s.cost,s.owner,s.op_type]));
+  const rows=[['ticker','name','market','shares','cost','owner','op_type','is_dca']];
+  stocks.forEach(s=>rows.push([s.ticker,s.name||'',s.market,s.shares,s.cost,s.owner,s.op_type,s.is_dca?'true':'false']));
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8'}));
   a.download='family-portfolio.csv';a.click();
