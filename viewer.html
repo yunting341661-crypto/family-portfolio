@@ -198,7 +198,7 @@ async function fetchAll(){
 function groupStocks(list){
   const map={};
   list.forEach(s=>{
-    const key=s.ticker+'|'+s.owner+'|'+s.status;
+    const key=s.is_dca?(s.ticker+'|'+s.owner+'|'+s.status+'|dca'):(s.id);
     if(!map[key])map[key]={ticker:s.ticker,market:s.market,owner:s.owner,status:s.status,op_type:s.op_type||'none',name:s.name||'',yahoo_symbol:s.yahoo_symbol||null,batches:[],totalShares:0,totalCostTWD:0,totalRealized:0};
     const g=map[key];g.batches.push(s);g.totalShares+=Number(s.shares)||0;g.totalCostTWD+=getCostTWD(s);g.totalRealized+=getRealized(s);
     if(s.name&&!g.name)g.name=s.name;if(s.op_type==='mine')g.op_type='mine';if(s.op_type==='old')g.op_type=g.op_type==='mine'?'mine':'old';
@@ -220,8 +220,8 @@ function renderSummary(){
   const pe=g('s-pnl');pe.textContent=stocks.length?sign(pnl)+'$'+fmt(Math.abs(pnl)):'—';pe.className='val '+sc;
   const ppe=g('s-pct');ppe.textContent=stocks.length?sign(pnl)+pct.toFixed(1)+'%':'';ppe.className='sub '+sc;
   const re=g('s-realized');re.textContent=sign(totReal)+'$'+fmt(Math.abs(totReal));re.className='val '+pnlCls(totReal);
-  g('s-count').textContent=stocks.filter(s=>s.status!=='sold').length;
-  g('s-mkt').textContent='台股 '+stocks.filter(s=>s.market==='tw'&&s.status!=='sold').length+' ／ 美股 '+stocks.filter(s=>s.market==='us'&&s.status!=='sold').length;
+  g('s-count').textContent=new Set(stocks.filter(s=>s.status!=='sold').map(s=>s.ticker)).size;
+  g('s-mkt').textContent='台股 '+new Set(stocks.filter(s=>s.market==='tw'&&s.status!=='sold').map(s=>s.ticker)).size+' ／ 美股 '+new Set(stocks.filter(s=>s.market==='us'&&s.status!=='sold').map(s=>s.ticker)).size;
   const myTotal=acc.dad.myUnreal+acc.dad.myReal,myPct=acc.dad.myC>0?myTotal/acc.dad.myC*100:0;
   g('op-cost').textContent=acc.dad.myC>0?'$'+fmt(acc.dad.myC):'—';
   const ue=g('op-unreal');ue.textContent=acc.dad.myC>0?sign(acc.dad.myUnreal)+'$'+fmt(Math.abs(acc.dad.myUnreal)):'—';ue.className='val '+pnlCls(acc.dad.myUnreal);

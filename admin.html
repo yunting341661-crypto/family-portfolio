@@ -226,6 +226,7 @@ tr.detail-row:hover td{background:var(--bg3)}
     <div class="field"><label>Yahoo 代號（選填，有特殊市場才需填）</label><input type="text" id="m-yahoo" placeholder="例：5274.TWO 或 0050.TW"><div class="hint">一般台股不用填，系統自動加 .TW；OTC/興櫃股票請填完整代號</div></div>
     <div class="field"><label>股數</label><input type="number" id="m-shares" placeholder="例：1000" min="1"></div>
     <div class="field"><label>成本/股（台幣或美元）</label><input type="number" id="m-cost" placeholder="例：750" step="0.01" min="0"></div>
+    <div class="field"><label>買入日期（選填）</label><input type="date" id="m-buydate"></div>
     <div class="field"><label>狀態</label><select id="m-status" onchange="onStatusChange()"><option value="holding">持有中</option><option value="sold">已賣出</option></select></div>
     <div class="field" id="sell-price-field" style="display:none"><label>賣出價/股</label><input type="number" id="m-sell-price" placeholder="例：320" step="0.01" min="0"></div>
     <div id="op-field" style="display:none">
@@ -308,8 +309,8 @@ async function fetchAll(){
 function groupStocks(list){
   const map={};
   list.forEach(s=>{
-    const key=s.ticker+'|'+s.owner+'|'+s.status;
-    if(!map[key])map[key]={ticker:s.ticker,market:s.market,owner:s.owner,status:s.status,op_type:s.op_type||'none',name:s.name||'',is_dca:false,yahoo_symbol:s.yahoo_symbol||null,batches:[],totalShares:0,totalCostTWD:0,totalRealized:0};
+    const key=s.is_dca?(s.ticker+'|'+s.owner+'|'+s.status+'|dca'):(s.id);
+    if(!map[key])map[key]={ticker:s.ticker,market:s.market,owner:s.owner,status:s.status,op_type:s.op_type||'none',name:s.name||'',is_dca:!!s.is_dca,yahoo_symbol:s.yahoo_symbol||null,batches:[],totalShares:0,totalCostTWD:0,totalRealized:0};
     const g=map[key];
     g.batches.push(s);
     g.totalShares+=Number(s.shares)||0;
@@ -351,7 +352,7 @@ function renderSummary(){
   const re=g('s-realized');re.textContent=sign(totReal)+'$'+fmt(Math.abs(totReal));re.className='val '+pnlCls(totReal);
   const tw=stocks.filter(s=>s.market==='tw'&&s.status!=='sold').length;
   const us=stocks.filter(s=>s.market==='us'&&s.status!=='sold').length;
-  g('s-count').textContent=stocks.filter(s=>s.status!=='sold').length;
+  g('s-count').textContent=new Set(stocks.filter(s=>s.status!=='sold').map(s=>s.ticker)).size;
   g('s-mkt').textContent='台股 '+tw+' ／ 美股 '+us;
 
   // My trading performance
@@ -509,9 +510,9 @@ async function doAdd(){
   if(!shares||shares<=0){errEl.textContent='請輸入正確股數';errEl.style.display='block';return}
   if(isNaN(cost)||cost<0){errEl.textContent='請輸入成本';errEl.style.display='block';return}
   try{
-    await api('POST','stocks',{ticker,name,market,shares,cost,owner,op_type,status,sell_price:sell_price||null,yahoo_symbol});
+    await api('POST','stocks',{ticker,name,market,shares,cost,owner,op_type,status,sell_price:sell_price||null,yahoo_symbol,buy_date});
     await loadStocks();closeAddModal();await fetchAll();
-    ['m-ticker','m-name','m-shares','m-cost','m-sell-price','m-yahoo'].forEach(id=>g(id).value='');
+    ['m-ticker','m-name','m-shares','m-cost','m-sell-price','m-yahoo','m-buydate'].forEach(id=>g(id).value='');
   }catch(e){errEl.textContent='儲存失敗：'+e.message;errEl.style.display='block';}
 }
 
