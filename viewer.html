@@ -181,10 +181,8 @@ async function fetchPrice(sym){
     if(m) return m.regularMarketPrice||m.previousClose||null;
   }catch(e){}
   return null;
-}catch(e){}
-  try{const proxies=['https://api.allorigins.win/raw?url='];for(const proxy of proxies){try{const url=proxy+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?interval=1d&range=1d');const r=await fetch(url);const d=await r.json();const m=d.chart?.result?.[0]?.meta;if(m)return m.regularMarketPrice||m.previousClose||null;}catch(e2){}}}catch(e){}
-  return null;
 }
+
 async function fetchAll(){
   const hs=stocks.filter(s=>s.status!=='sold');if(!hs.length){renderAll();return;}
   const ic=g('ricon');ic.textContent='⟳';ic.className='spin';
