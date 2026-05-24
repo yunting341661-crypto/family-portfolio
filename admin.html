@@ -280,16 +280,22 @@ function getRealized(s){
 
 // CORS proxy for Yahoo Finance
 async function fetchPrice(sym){
-  // Try direct first
   try{
-    const r=await fetch('https://query2.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=5d',{headers:{'User-Agent':'Mozilla/5.0'}});
+    const url='https://api.allorigins.win/raw?url='+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?interval=1d&range=1d');
+    const r=await fetch(url);
+    const d=await r.json();
+    const m=d.chart?.result?.[0]?.meta;
+    if(m) return m.regularMarketPrice||m.previousClose||null;
+  }catch(e){}
+  return null;
+}});
     const d=await r.json();
     const m=d.chart?.result?.[0]?.meta;
     if(m)return m.regularMarketPrice||m.previousClose||null;
   }catch(e){}
   // Try via proxy
   try{
-    const proxies=['https://corsproxy.io/?','https://api.allorigins.win/raw?url='];
+    const proxies=['https://api.allorigins.win/raw?url='];
     for(const proxy of proxies){
       try{
         const url=proxy+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?interval=1d&range=1d');

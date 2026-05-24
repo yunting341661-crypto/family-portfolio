@@ -173,8 +173,16 @@ function getCostTWD(s){return(s.market==='us'?s.cost*RATE:s.cost)*s.shares}
 function getRealized(s){if(s.status!=='sold'||s.sell_price==null)return 0;return((s.market==='us'?s.sell_price*RATE:s.sell_price)-(s.market==='us'?s.cost*RATE:s.cost))*s.shares}
 
 async function fetchPrice(sym){
-  try{const r=await fetch('https://query2.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=5d');const d=await r.json();const m=d.chart?.result?.[0]?.meta;if(m)return m.regularMarketPrice||m.previousClose||null;}catch(e){}
-  try{const proxies=['https://corsproxy.io/?','https://api.allorigins.win/raw?url='];for(const proxy of proxies){try{const url=proxy+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?interval=1d&range=1d');const r=await fetch(url);const d=await r.json();const m=d.chart?.result?.[0]?.meta;if(m)return m.regularMarketPrice||m.previousClose||null;}catch(e2){}}}catch(e){}
+  try{
+    const url='https://api.allorigins.win/raw?url='+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?interval=1d&range=1d');
+    const r=await fetch(url);
+    const d=await r.json();
+    const m=d.chart?.result?.[0]?.meta;
+    if(m) return m.regularMarketPrice||m.previousClose||null;
+  }catch(e){}
+  return null;
+}catch(e){}
+  try{const proxies=['https://api.allorigins.win/raw?url='];for(const proxy of proxies){try{const url=proxy+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?interval=1d&range=1d');const r=await fetch(url);const d=await r.json();const m=d.chart?.result?.[0]?.meta;if(m)return m.regularMarketPrice||m.previousClose||null;}catch(e2){}}}catch(e){}
   return null;
 }
 async function fetchAll(){
