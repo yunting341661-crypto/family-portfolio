@@ -337,17 +337,13 @@ function renderAll(){
   const dadMine=stocks.filter(s=>s.owner==='dad'&&s.op_type==='mine');
   const d2holding=dadMine.filter(s=>s.status!=='sold');
   const d2sold=dadMine.filter(s=>s.status==='sold');
-  let d2MV=0,d2Cost=0,d2Real=0;
-  d2holding.forEach(s=>{const m=getMV(s);const c=getCostTWD(s);if(m!=null){d2MV+=m;d2Cost+=c;}});
-  d2sold.forEach(s=>{d2Real+=getRealized(s);d2Cost+=getCostTWD(s);});
-  // Cost should only count holding for unrealized
-  let d2CostHolding=0;
-  d2holding.forEach(s=>{const m=getMV(s);if(m!=null)d2CostHolding+=getCostTWD(s);});
+  let d2MV=0,d2CostHolding=0,d2Real=0;
+  d2holding.forEach(s=>{const m=getMV(s);const c=getCostTWD(s);if(m!=null){d2MV+=m;d2CostHolding+=c;}});
+  d2sold.forEach(s=>{d2Real+=getRealized(s);});
   const d2Unreal=d2MV-d2CostHolding;
   const d2Total=d2Unreal+d2Real;
-  const d2TotalCost=d2holding.reduce((a,s)=>a+getCostTWD(s),0)+d2sold.reduce((a,s)=>a+getCostTWD(s),0);
-  const d2TotalPct=d2TotalCost>0?d2Total/d2TotalCost*100:0;
-  g('dad2-cost').textContent='$'+fmt(d2TotalCost);
+  const d2TotalPct=d2CostHolding>0?d2Total/d2CostHolding*100:0;
+  g('dad2-cost').textContent='$'+fmt(d2CostHolding);
   g('dad2-mv').textContent='$'+fmt(d2MV);
   const d2ue=g('dad2-unreal');d2ue.textContent=(d2Unreal>=0?'+':'')+' $'+fmt(Math.abs(d2Unreal));d2ue.className='val '+pnlCls(d2Unreal);
   const d2up=g('dad2-unreal-p');d2up.textContent=(d2Unreal>=0?'+':'')+( d2CostHolding>0?(d2Unreal/d2CostHolding*100).toFixed(1):0)+'%';d2up.className=pnlCls(d2Unreal);
