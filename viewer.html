@@ -213,7 +213,7 @@ function renderSummary(){
     const mv=getMV(s);const c=getCostTWD(s);const real=getRealized(s);
     totReal+=real;if(mv!==null){totV+=mv;totC+=c;}
     const o=s.owner;if(acc[o]){if(mv!==null){acc[o].v+=mv;acc[o].c+=c;}acc[o].real+=real;acc[o].n++;}
-    if(o==='dad'&&s.op_type==='mine'){if(mv!==null){acc.dad.myUnreal+=mv-c;acc.dad.myC+=c;}acc.dad.myReal+=real;}
+    if(o==='dad'&&s.op_type==='mine'){if(mv!==null&&s.status!=='sold'){acc.dad.myUnreal+=mv-c;acc.dad.myC+=c;}acc.dad.myReal+=real;}
   });
   const pnl=totV-totC,pct=totC>0?pnl/totC*100:0,sc=pnlCls(pnl);
   g('s-total').textContent=stocks.length?'$'+fmt(totV):'—';

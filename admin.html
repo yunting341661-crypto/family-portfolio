@@ -340,7 +340,7 @@ function renderSummary(){
       acc[o].real+=real;acc[o].n++;
     }
     if(o==='dad'&&s.op_type==='mine'){
-      if(mv!==null){acc.dad.myUnreal+=mv-c;acc.dad.myC+=c;}
+      if(mv!==null&&s.status!=='sold'){acc.dad.myUnreal+=mv-c;acc.dad.myC+=c;}
       acc.dad.myReal+=real;
     }
   });
