@@ -309,7 +309,7 @@ async function fetchAll(){
 function groupStocks(list){
   const map={};
   list.forEach(s=>{
-    const key=s.is_dca?(s.ticker+'|'+s.owner+'|'+s.status+'|dca'):(s.id);
+    const key=s.ticker+'|'+s.owner+'|'+s.status;
     if(!map[key])map[key]={ticker:s.ticker,market:s.market,owner:s.owner,status:s.status,op_type:s.op_type||'none',name:s.name||'',is_dca:!!s.is_dca,yahoo_symbol:s.yahoo_symbol||null,batches:[],totalShares:0,totalCostTWD:0,totalRealized:0};
     const g=map[key];
     g.batches.push(s);
@@ -417,7 +417,7 @@ function renderTable(){
     const pct=pnl!=null&&c>0?pnl/c*100:null;
     const sg=sign(pnl||0),cls=pnl!=null?pnlCls(pnl):'neu';
     const avgCostOrig=grp.totalShares>0?(isUS?c/grp.totalShares/RATE:c/grp.totalShares):0;
-    const isDCA=grp.is_dca;
+    const isDCA=grp.batches.length>1;
     const gkey=grp.ticker+'|'+grp.owner+'|'+grp.status;
     const isOpen=expanded[gkey];
     const priceStr=isSold?'已出清':(p?(isUS?'$'+fmtD(p):fmt(p)):'—');
