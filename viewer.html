@@ -166,7 +166,7 @@ async function loadStocks(){
   const r=await fetch(SB_URL+'/rest/v1/stocks?select=*&order=created_at.asc',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});
   stocks=await r.json();
 }
-function getSymbol(s){return s.market==='tw'?s.ticker+'.TW':s.ticker}
+function getSymbol(s){if(s.yahoo_symbol)return s.yahoo_symbol;return s.market==='tw'?s.ticker+'.TW':s.market==='us'?s.ticker:s.ticker+'.'+s.market.toUpperCase()}
 function getPrice(s){return prices[getSymbol(s)]??null}
 function getMV(s){if(s.status==='sold')return 0;const p=getPrice(s);if(!p)return null;return(s.market==='us'?p*RATE:p)*s.shares}
 function getCostTWD(s){return(s.market==='us'?s.cost*RATE:s.cost)*s.shares}

@@ -223,6 +223,7 @@ tr.detail-row:hover td{background:var(--bg3)}
     <div class="field"><label>市場</label><select id="m-market"><option value="tw">台股</option><option value="us">美股</option></select></div>
     <div class="field"><label>股票代號</label><input type="text" id="m-ticker" placeholder="例：2330 或 NVDA" style="text-transform:uppercase"></div>
     <div class="field"><label>股票名稱（選填）</label><input type="text" id="m-name" placeholder="例：台積電"></div>
+    <div class="field"><label>Yahoo 代號（選填，有特殊市場才需填）</label><input type="text" id="m-yahoo" placeholder="例：5274.TWO 或 0050.TW"><div class="hint">一般台股不用填，系統自動加 .TW；OTC/興櫃股票請填完整代號</div></div>
     <div class="field"><label>股數</label><input type="number" id="m-shares" placeholder="例：1000" min="1"></div>
     <div class="field"><label>成本/股（台幣或美元）</label><input type="number" id="m-cost" placeholder="例：750" step="0.01" min="0"></div>
     <div class="field"><label>狀態</label><select id="m-status" onchange="onStatusChange()"><option value="holding">持有中</option><option value="sold">已賣出</option></select></div>
@@ -265,7 +266,7 @@ async function api(method,path,body){
 }
 async function loadStocks(){stocks=await api('GET','stocks?select=*&order=created_at.asc')}
 
-function getSymbol(s){return s.market==='tw'?s.ticker+'.TW':s.ticker}
+function getSymbol(s){if(s.yahoo_symbol)return s.yahoo_symbol;return s.market==='tw'?s.ticker+'.TW':s.market==='us'?s.ticker:s.ticker+'.'+s.market.toUpperCase()}
 function getPrice(s){return prices[getSymbol(s)]??null}
 function getMV(s){
   if(s.status==='sold')return 0;
@@ -508,9 +509,9 @@ async function doAdd(){
   if(!shares||shares<=0){errEl.textContent='請輸入正確股數';errEl.style.display='block';return}
   if(isNaN(cost)||cost<0){errEl.textContent='請輸入成本';errEl.style.display='block';return}
   try{
-    await api('POST','stocks',{ticker,name,market,shares,cost,owner,op_type,status,sell_price:sell_price||null});
+    await api('POST','stocks',{ticker,name,market,shares,cost,owner,op_type,status,sell_price:sell_price||null,yahoo_symbol});
     await loadStocks();closeAddModal();await fetchAll();
-    ['m-ticker','m-name','m-shares','m-cost','m-sell-price'].forEach(id=>g(id).value='');
+    ['m-ticker','m-name','m-shares','m-cost','m-sell-price','m-yahoo'].forEach(id=>g(id).value='');
   }catch(e){errEl.textContent='儲存失敗：'+e.message;errEl.style.display='block';}
 }
 
