@@ -207,7 +207,7 @@ tr.detail-row:hover td{background:var(--bg3)}
         <th style="width:28px"></th>
         <th>股票</th><th class="r">現價</th><th class="r">加權成本</th><th class="r">總股數</th>
         <th class="r">市值(台幣)</th><th class="r">損益(台幣)</th><th class="r">損益%</th>
-        <th>持有人</th><th>類型</th>
+        <th>持有人</th><th>類型</th><th>定期定額</th>
       </tr>
     </thead>
     <tbody id="tbody"><tr><td colspan="10" style="text-align:center;color:var(--text3);padding:3rem">載入中...</td></tr></tbody>
@@ -258,7 +258,8 @@ function setStatus(txt,err){g('stxt').textContent=txt;g('sdot').className='sdot'
 function money(n){return n===null||isNaN(n)?'—':'$'+fmt(Math.abs(n))}
 
 async function api(method,path,body){
-  const r=await fetch(SB_URL+'/rest/v1/'+path,{method,headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:method==='POST'?'return=representation':''},body:body?JSON.stringify(body):undefined});
+  const prefer=method==='POST'?'return=representation':method==='PATCH'?'return=representation':'';
+  const r=await fetch(SB_URL+'/rest/v1/'+path,{method,headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:prefer},body:body?JSON.stringify(body):undefined});
   if(!r.ok)throw new Error(await r.text());
   return method==='DELETE'?null:r.json();
 }
@@ -308,7 +309,7 @@ function groupStocks(list){
   const map={};
   list.forEach(s=>{
     const key=s.ticker+'|'+s.owner+'|'+s.status;
-    if(!map[key])map[key]={ticker:s.ticker,market:s.market,owner:s.owner,status:s.status,op_type:s.op_type||'none',name:s.name||'',batches:[],totalShares:0,totalCostTWD:0,totalRealized:0};
+    if(!map[key])map[key]={ticker:s.ticker,market:s.market,owner:s.owner,status:s.status,op_type:s.op_type||'none',name:s.name||'',is_dca:false,batches:[],totalShares:0,totalCostTWD:0,totalRealized:0};
     const g=map[key];
     g.batches.push(s);
     g.totalShares+=Number(s.shares)||0;
@@ -317,6 +318,7 @@ function groupStocks(list){
     if(s.name&&!g.name)g.name=s.name;
     if(s.op_type==='mine')g.op_type='mine';
     if(s.op_type==='old')g.op_type=g.op_type==='mine'?'mine':'old';
+    if(s.is_dca)g.is_dca=true;
   });
   return Object.values(map);
 }
@@ -414,13 +416,14 @@ function renderTable(){
     const pct=pnl!=null&&c>0?pnl/c*100:null;
     const sg=sign(pnl||0),cls=pnl!=null?pnlCls(pnl):'neu';
     const avgCostOrig=grp.totalShares>0?(isUS?c/grp.totalShares/RATE:c/grp.totalShares):0;
-    const isDCA=grp.batches.length>1;
+    const isDCA=grp.is_dca;
     const gkey=grp.ticker+'|'+grp.owner+'|'+grp.status;
     const isOpen=expanded[gkey];
     const priceStr=isSold?'已出清':(p?(isUS?'$'+fmtD(p):fmt(p)):'—');
 
+    const hasMult=grp.batches.length>1;
     html+=`<tr class="group-row" onclick="toggleGroup('${gkey}')">
-      <td><button class="expand-btn ${isDCA?(isOpen?'open':''):''}" style="${isDCA?'':'visibility:hidden'}">${isDCA?'▶':''}</button></td>
+      <td><button class="expand-btn ${(isDCA&&hasMult)?(isOpen?'open':''):''}" style="${(isDCA&&hasMult)?'':'visibility:hidden'}">${(isDCA&&hasMult)?'▶':''}</button></td>
       <td><span style="font-weight:500">${grp.ticker}</span>
         <span class="badge ${isUS?'us-b':'tw-b'}">${isUS?'美':'台'}</span>
         ${grp.op_type==='mine'?'<span class="badge op-b">操盤</span>':''}
@@ -436,8 +439,9 @@ function renderTable(){
       <td class="r ${cls}">${pnl!=null?sg+'$'+fmt(Math.abs(pnl)):'—'}</td>
       <td class="r ${cls}">${pct!=null?sg+pct.toFixed(1)+'%':'—'}</td>
       <td style="color:var(--text2)">${ownerLabel[grp.owner]||grp.owner}</td>
-      <td>${!isDCA?`<button onclick="event.stopPropagation();delStock('${grp.batches[0].id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px">🗑</button>`:''}
+      <td>${!isDCA&&grp.batches.length===1?`<button onclick="event.stopPropagation();delStock('${grp.batches[0].id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px">🗑</button>`:''}
       </td>
+      <td onclick="event.stopPropagation()"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;color:var(--text2)"><input type="checkbox" ${isDCA?'checked':''} onchange="toggleDCA('${gkey}',this.checked,${JSON.stringify(grp.batches.map(b=>b.id))})"> 定期定額</label></td>
     </tr>`;
 
     if(isDCA&&isOpen){
@@ -451,7 +455,7 @@ function renderTable(){
         const bCostOrig=isUS?s.cost.toFixed(2):fmt(s.cost);
         html+=`<tr class="detail-row">
           <td></td>
-          <td style="padding-left:20px">批次 ${bi+1}${s.buy_date?' · '+s.buy_date:''}</td>
+          <td style="padding-left:20px">📅 ${s.buy_date||('批次 '+(bi+1))}</td>
           <td class="r">${priceStr}</td>
           <td class="r">${isUS?'$'+bCostOrig:bCostOrig}</td>
           <td class="r">${fmt(s.shares)}</td>
@@ -459,7 +463,7 @@ function renderTable(){
           <td class="r ${bcls}">${bPnl!=null?bsg+'$'+fmt(Math.abs(bPnl)):'—'}</td>
           <td class="r ${bcls}">${bPct!=null?bsg+bPct.toFixed(1)+'%':'—'}</td>
           <td></td>
-          <td><button onclick="event.stopPropagation();delStock('${s.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px">🗑</button></td>
+          <td colspan="2"><button onclick="event.stopPropagation();delStock('${s.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px">🗑</button></td>
         </tr>`;
       });
     }
@@ -468,6 +472,21 @@ function renderTable(){
 }
 
 function toggleGroup(key){expanded[key]=!expanded[key];renderTable()}
+async function toggleDCA(gkey,checked,ids){
+  try{
+    await Promise.all(ids.map(id=>api('PATCH','stocks?id=eq.'+id,{is_dca:checked})));
+    await loadStocks();renderAll();
+  }catch(e){alert('更新失敗：'+e.message);}
+}
+async function toggleDCA(event,ticker,owner,status,checked){
+  event.stopPropagation();
+  const targets=stocks.filter(s=>s.ticker===ticker&&s.owner===owner&&s.status===status);
+  try{
+    await Promise.all(targets.map(s=>api('PATCH','stocks?id=eq.'+s.id,{is_dca:checked})));
+    await loadStocks();renderAll();
+  }catch(e){alert('更新失敗：'+e.message);}
+}
+
 function renderAll(){renderSummary();renderTable()}
 function filter(f,btn){curFilter=f;document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderTable()}
 
