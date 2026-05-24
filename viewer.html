@@ -278,7 +278,7 @@ function renderTable(){
         <span class="badge ${isUS?'us-b':'tw-b'}">${isUS?'美':'台'}</span>
         ${grp.op_type==='mine'?'<span class="badge op-b">操盤</span>':''}
         ${grp.op_type==='old'?'<span class="badge old-b">舊股</span>':''}
-        ${isDCA?'<span class="badge dca-b">定期</span>':''}
+        ${grp.is_dca?'<span class="badge dca-b">定期定額</span>':''}
         ${isSold?'<span class="badge sold-b">已出清</span>':''}
         ${grp.name?`<div style="font-size:11px;color:var(--text2);margin-top:2px">${grp.name}</div>`:''}
       </td>
