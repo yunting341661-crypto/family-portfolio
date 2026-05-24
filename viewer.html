@@ -6,192 +6,216 @@
 <title>家族投資組合</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#fff;--bg2:#f7f7f5;--bg3:#f0efe8;--text:#1a1a18;--text2:#6b6b66;--text3:#9e9e99;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.18);--pos:#1D9E75;--neg:#D85A30;--rad-md:8px;--rad-lg:12px}
-@media(prefers-color-scheme:dark){:root{--bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;--text:#f0efe8;--text2:#9e9e99;--text3:#6b6b66;--border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.18)}}
+:root{--bg:#fff;--bg2:#f7f7f5;--bg3:#f0efe8;--text:#1a1a18;--text2:#6b6b66;--text3:#9e9e99;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.2);--pos:#1D9E75;--neg:#D85A30;--r:8px;--rl:12px}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;--text:#f0efe8;--text2:#9e9e99;--text3:#6b6b66;--border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.2)}}
 body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh}
-.page{max-width:980px;margin:0 auto;padding:2rem 1.25rem}
-.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px}
-.top-bar h1{font-size:20px;font-weight:500}
-.top-right{display:flex;align-items:center;gap:10px}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:var(--rad-md);font-size:13px;cursor:pointer;border:.5px solid var(--border2);background:var(--bg);color:var(--text2)}
+.wrap{max-width:1000px;margin:0 auto;padding:1.5rem 1rem}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px}
+.topbar h1{font-size:18px;font-weight:500}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.badge-ro{background:#E1F5EE;color:#085041;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:var(--r);font-size:12px;cursor:pointer;border:.5px solid var(--border2);background:var(--bg);color:var(--text2)}
 .btn:hover{background:var(--bg2)}
-.status{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:5px}
-.sdot{width:6px;height:6px;border-radius:50%;background:var(--pos);flex-shrink:0}
-.sdot.err{background:var(--neg)}
-.ro-badge{background:#E1F5EE;color:#085041;font-size:11px;padding:2px 8px;border-radius:var(--rad-md);font-weight:500}
-.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.5rem}
-.metric{background:var(--bg);border-radius:var(--rad-md);padding:.9rem 1rem;border:.5px solid var(--border)}
-.metric .lbl{font-size:12px;color:var(--text2);margin-bottom:5px}
-.metric .val{font-size:20px;font-weight:500}
-.metric .sub{font-size:12px;margin-top:3px}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--pos);flex-shrink:0}
+.status-dot.err{background:var(--neg)}
+.status-row{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text3)}
+.rate-row{display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:var(--r);padding:6px 12px;font-size:12px;margin-bottom:1.25rem;flex-wrap:wrap}
+.rate-row span{color:var(--text2)}
 .pos{color:var(--pos)}.neg{color:var(--neg)}.neu{color:var(--text2)}
-.sec-title{font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
-.acc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:1.5rem}
-.acc-card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rad-lg);padding:1rem 1.1rem}
-.acc-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px;flex-shrink:0}
-.av-b{background:#E6F1FB;color:#0C447C}.av-t{background:#E1F5EE;color:#085041}.av-a{background:#FAEEDA;color:#633806}
-.acc-name{font-size:14px;font-weight:500}.acc-sub{font-size:11px;color:var(--text2)}
-.acc-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
-.acc-row .k{font-size:12px;color:var(--text2)}.acc-row .v{font-size:13px;font-weight:500}
-.divider{border:none;border-top:.5px solid var(--border);margin:10px 0}
-.op-box{background:#FAEEDA;border-radius:var(--rad-md);padding:8px 10px;margin-top:8px}
-.op-box .olbl{font-size:11px;color:#633806;margin-bottom:2px}
-.op-box .oval{font-size:14px;font-weight:500}
-.my-panel{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rad-lg);padding:1rem 1.25rem;margin-bottom:1.5rem}
-.my-panel-head{display:flex;align-items:center;margin-bottom:12px}
-.my-panel-head h2{font-size:15px;font-weight:500}
-.op-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:8px}
-.op-m{background:var(--bg2);border-radius:var(--rad-md);padding:.7rem .9rem}
-.op-m .lbl{font-size:11px;color:var(--text2);margin-bottom:3px}
-.op-m .val{font-size:16px;font-weight:500}
+.section-title{font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;margin-top:1.5rem}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.5rem}
+.card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--r);padding:.8rem 1rem}
+.card .lbl{font-size:11px;color:var(--text2);margin-bottom:4px}
+.card .val{font-size:18px;font-weight:500}
+.card .sub{font-size:11px;margin-top:3px}
+.block{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1.5rem}
+.block-head{display:flex;align-items:center;gap:8px;margin-bottom:1rem}
+.block-head h2{font-size:15px;font-weight:500}
+.block-head .tag{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
+.tag-old{background:#E8E8E4;color:#444}
+.tag-mine{background:#FAEEDA;color:#633806}
+.metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:1rem}
+.metric{background:var(--bg2);border-radius:var(--r);padding:.7rem .9rem}
+.metric .lbl{font-size:11px;color:var(--text2);margin-bottom:3px}
+.metric .val{font-size:16px;font-weight:500}
 .tabs{display:flex;gap:2px;margin-bottom:10px;flex-wrap:wrap}
-.tab{padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;color:var(--text2);border:none;background:transparent}
-.tab.active{background:var(--bg);color:var(--text);font-weight:500;box-shadow:0 0 0 .5px var(--border2)}
-.tbl-wrap{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rad-lg);overflow:hidden;margin-bottom:1.5rem;overflow-x:auto}
-table{width:100%;min-width:600px;border-collapse:collapse;font-size:12px}
-th{background:var(--bg2);padding:7px 10px;text-align:left;font-weight:500;color:var(--text2);font-size:11px;border-bottom:.5px solid var(--border)}
+.tab{padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;color:var(--text2);border:none;background:transparent}
+.tab.on{background:var(--bg2);color:var(--text);font-weight:500;box-shadow:0 0 0 .5px var(--border2)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;min-width:560px;border-collapse:collapse;font-size:12px}
+th{background:var(--bg2);padding:6px 10px;text-align:left;font-weight:500;color:var(--text2);font-size:11px;border-bottom:.5px solid var(--border)}
 th.r,td.r{text-align:right}
-td{padding:8px 10px;border-bottom:.5px solid var(--border);color:var(--text);vertical-align:middle}
+td{padding:7px 10px;border-bottom:.5px solid var(--border);color:var(--text);vertical-align:middle}
 tr:last-child td{border-bottom:none}
-tr.group-row{cursor:pointer}
-tr.group-row:hover td{background:var(--bg2)}
-tr.detail-row td{background:var(--bg2);font-size:11px;color:var(--text2);padding:6px 10px}
+tr.gr:hover td{background:var(--bg2);cursor:pointer}
+tr.dr td{background:var(--bg2);font-size:11px;color:var(--text2);padding:5px 10px}
 .badge{display:inline-block;font-size:10px;padding:1px 5px;border-radius:3px;margin-left:3px;font-weight:500;vertical-align:middle}
-.tw-b{background:#E1F5EE;color:#085041}.us-b{background:#E6F1FB;color:#0C447C}
-.op-b{background:#FAEEDA;color:#633806}
-.old-b{background:#E8E8E4;color:#444}.sold-b{background:#FCE8E8;color:#A32D2D}
-.expand-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:0 4px;transition:transform .2s;display:inline-block}
-.expand-btn.open{transform:rotate(90deg)}
-.footer{text-align:center;font-size:12px;color:var(--text3);margin-top:1rem}
+.b-tw{background:#E1F5EE;color:#085041}.b-us{background:#E6F1FB;color:#0C447C}
+.b-old{background:#E8E8E4;color:#444}.b-mine{background:#FAEEDA;color:#633806}
+.b-sold{background:#FCE8E8;color:#A32D2D}
+.exp{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:0 3px;transition:transform .15s;display:inline-block}
+.exp.open{transform:rotate(90deg)}
+.footer{text-align:center;font-size:11px;color:var(--text3);margin-top:2rem}
 .spin{animation:spin 1s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div class="page">
-<div class="top-bar">
-  <h1>家族投資組合 <span class="ro-badge">查看</span></h1>
-  <div class="top-right">
-    <div class="status"><span class="sdot" id="sdot"></span><span id="stxt">載入中...</span></div>
-    <button class="btn" onclick="init()"><span id="ricon">↻</span> 重新整理</button>
+<div class="wrap">
+<div class="topbar">
+  <h1>家族投資組合 <span class="badge-ro">查看</span></h1>
+  <div class="topbar-right">
+    <div class="status-row"><span class="status-dot" id="sdot"></span><span id="stxt">載入中...</span></div>
+    <button class="btn" onclick="init()"><span id="ricon">↻</span> 更新報價</button>
   </div>
 </div>
 
+<div class="rate-row">
+  <span>USD/TWD 匯率：</span>
+  <b id="rate-display">32.50</b>
+  <span style="color:var(--text3)" id="rate-time"></span>
+</div>
+
+<div class="section-title">整體概況</div>
 <div class="summary-grid">
-  <div class="metric"><div class="lbl">總資產（台幣）</div><div class="val" id="s-total">—</div></div>
-  <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="s-pnl">—</div><div class="sub" id="s-pct"></div></div>
-  <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="s-realized">—</div></div>
-  <div class="metric"><div class="lbl">持股檔數</div><div class="val" id="s-count">—</div><div class="sub" id="s-mkt"></div></div>
+  <div class="card"><div class="lbl">總資產（台幣）</div><div class="val" id="g-total">—</div></div>
+  <div class="card"><div class="lbl">未實現損益</div><div class="val" id="g-unreal">—</div><div class="sub" id="g-unreal-p"></div></div>
+  <div class="card"><div class="lbl">已實現損益</div><div class="val" id="g-real">—</div></div>
+  <div class="card"><div class="lbl">台股持倉</div><div class="val" id="g-tw">—</div></div>
+  <div class="card"><div class="lbl">美股持倉</div><div class="val" id="g-us">—</div></div>
 </div>
 
-<div class="my-panel">
-  <div class="my-panel-head"><span style="margin-right:8px">📈</span><h2>操盤績效</h2></div>
-  <div class="op-grid">
-    <div class="op-m"><div class="lbl">投入成本</div><div class="val" id="op-cost">—</div></div>
-    <div class="op-m"><div class="lbl">未實現損益</div><div class="val" id="op-unreal">—</div><div style="font-size:11px;margin-top:2px" id="op-unreal-pct"></div></div>
-    <div class="op-m"><div class="lbl">已實現損益</div><div class="val" id="op-real">—</div></div>
-    <div class="op-m"><div class="lbl">操盤總損益</div><div class="val" id="op-total">—</div><div style="font-size:11px;margin-top:2px" id="op-total-pct"></div></div>
+<!-- 爸爸 -->
+<div class="section-title">爸爸帳戶</div>
+
+<div class="block">
+  <div class="block-head"><h2>區塊一：原有持股</h2><span class="tag tag-old">舊股</span></div>
+  <div class="metrics-row">
+    <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="dad1-mv">—</div></div>
+    <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="dad1-unreal">—</div><div style="font-size:11px;margin-top:2px" id="dad1-unreal-p"></div></div>
+    <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="dad1-real">—</div></div>
   </div>
+  <div class="tabs">
+    <button class="tab on" onclick="setTblFilter('dad-old','all',this)">全部</button>
+    <button class="tab" onclick="setTblFilter('dad-old','holding',this)">持有中</button>
+    <button class="tab" onclick="setTblFilter('dad-old','sold',this)">已出清</button>
+  </div>
+  <div class="tbl-wrap" id="dad1-tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="dad1-tbody"></tbody></table></div>
 </div>
 
-<div class="sec-title">各帳戶概況</div>
-<div class="acc-grid">
-  <div class="acc-card">
-    <div class="acc-head"><div class="avatar av-b">爸</div><div><div class="acc-name">爸爸</div><div class="acc-sub" id="a-dad-n">0 筆</div></div></div>
-    <div class="acc-row"><span class="k">持股市值</span><span class="v" id="a-dad-val">—</span></div>
-    <div class="acc-row"><span class="k">未實現損益</span><span class="v" id="a-dad-pnl">—</span></div>
-    <div class="acc-row"><span class="k">已實現損益</span><span class="v" id="a-dad-real">—</span></div>
-    <hr class="divider">
-    <div class="op-box"><div class="olbl">操盤的部分（未+已）</div><div class="oval" id="a-dad-op">—</div></div>
+<div class="block">
+  <div class="block-head"><h2>區塊二：操盤部位</h2><span class="tag tag-mine">操盤</span></div>
+  <div class="metrics-row">
+    <div class="metric"><div class="lbl">投入成本</div><div class="val" id="dad2-cost">—</div></div>
+    <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="dad2-mv">—</div></div>
+    <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="dad2-unreal">—</div><div style="font-size:11px;margin-top:2px" id="dad2-unreal-p"></div></div>
+    <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="dad2-real">—</div></div>
+    <div class="metric"><div class="lbl">操盤總損益</div><div class="val" id="dad2-total">—</div><div style="font-size:11px;margin-top:2px" id="dad2-total-p"></div></div>
   </div>
-  <div class="acc-card">
-    <div class="acc-head"><div class="avatar av-t">媽</div><div><div class="acc-name">媽媽</div><div class="acc-sub" id="a-mom-n">0 筆</div></div></div>
-    <div class="acc-row"><span class="k">持股市值</span><span class="v" id="a-mom-val">—</span></div>
-    <div class="acc-row"><span class="k">未實現損益</span><span class="v" id="a-mom-pnl">—</span></div>
-    <div class="acc-row"><span class="k">已實現損益</span><span class="v" id="a-mom-real">—</span></div>
-    <hr class="divider">
-    <div class="acc-row"><span class="k">成本</span><span class="v" id="a-mom-cost">—</span></div>
+  <div class="tabs">
+    <button class="tab on" onclick="setTblFilter('dad-mine','all',this)">全部</button>
+    <button class="tab" onclick="setTblFilter('dad-mine','holding',this)">持有中</button>
+    <button class="tab" onclick="setTblFilter('dad-mine','sold',this)">已出清</button>
   </div>
-  <div class="acc-card">
-    <div class="acc-head"><div class="avatar av-a">我</div><div><div class="acc-name">我</div><div class="acc-sub" id="a-me-n">0 筆</div></div></div>
-    <div class="acc-row"><span class="k">持股市值</span><span class="v" id="a-me-val">—</span></div>
-    <div class="acc-row"><span class="k">未實現損益</span><span class="v" id="a-me-pnl">—</span></div>
-    <div class="acc-row"><span class="k">已實現損益</span><span class="v" id="a-me-real">—</span></div>
-    <hr class="divider">
-    <div class="acc-row"><span class="k">成本</span><span class="v" id="a-me-cost">—</span></div>
-  </div>
+  <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="dad2-tbody"></tbody></table></div>
 </div>
 
-<div class="tabs">
-  <button class="tab active" onclick="filter('all',this)">全部</button>
-  <button class="tab" onclick="filter('holding',this)">持有中</button>
-  <button class="tab" onclick="filter('sold',this)">已出清</button>
-  <button class="tab" onclick="filter('tw',this)">台股</button>
-  <button class="tab" onclick="filter('us',this)">美股</button>
-  <button class="tab" onclick="filter('dad',this)">爸爸</button>
-  <button class="tab" onclick="filter('mom',this)">媽媽</button>
-  <button class="tab" onclick="filter('me',this)">我</button>
+<!-- 媽媽 -->
+<div class="section-title">媽媽帳戶</div>
+<div class="block">
+  <div class="metrics-row">
+    <div class="metric"><div class="lbl">投入成本</div><div class="val" id="mom-cost">—</div></div>
+    <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="mom-mv">—</div></div>
+    <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="mom-unreal">—</div><div style="font-size:11px;margin-top:2px" id="mom-unreal-p"></div></div>
+    <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="mom-real">—</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" onclick="setTblFilter('mom','all',this)">全部</button>
+    <button class="tab" onclick="setTblFilter('mom','holding',this)">持有中</button>
+    <button class="tab" onclick="setTblFilter('mom','sold',this)">已出清</button>
+    <button class="tab" onclick="setTblFilter('mom','tw',this)">台股</button>
+    <button class="tab" onclick="setTblFilter('mom','us',this)">美股</button>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="mom-tbody"></tbody></table></div>
 </div>
 
-<div class="tbl-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th style="width:28px"></th>
-        <th>股票</th><th class="r">現價</th><th class="r">加權成本</th><th class="r">股數</th>
-        <th class="r">市值(台幣)</th><th class="r">損益(台幣)</th><th class="r">損益%</th><th>持有人</th>
-      </tr>
-    </thead>
-    <tbody id="tbody"><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:3rem">載入中...</td></tr></tbody>
-  </table>
+<!-- 我 -->
+<div class="section-title">我的帳戶</div>
+<div class="block">
+  <div class="metrics-row">
+    <div class="metric"><div class="lbl">投入成本</div><div class="val" id="me-cost">—</div></div>
+    <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="me-mv">—</div></div>
+    <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="me-unreal">—</div><div style="font-size:11px;margin-top:2px" id="me-unreal-p"></div></div>
+    <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="me-real">—</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" onclick="setTblFilter('me','all',this)">全部</button>
+    <button class="tab" onclick="setTblFilter('me','holding',this)">持有中</button>
+    <button class="tab" onclick="setTblFilter('me','sold',this)">已出清</button>
+    <button class="tab" onclick="setTblFilter('me','tw',this)">台股</button>
+    <button class="tab" onclick="setTblFilter('me','us',this)">美股</button>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="me-tbody"></tbody></table></div>
 </div>
-<div class="footer">報價每 5 分鐘自動更新・僅供參考・不構成投資建議</div>
+
+<div class="footer">報價僅供參考・不構成投資建議</div>
 </div>
 
 <script>
-const SB_URL='https://nqauumyfpdqkkqfjxury.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xYXV1bXlmcGRxa2txZmp4dXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mjk4MDYsImV4cCI6MjA5NTEwNTgwNn0.j-Ql0_eDLiCLRDyEzbzjVtq4mw7ORdk9eLniDR7zyow';
-const RATE=32.5;
-let stocks=[],prices={},curFilter='all',expanded={};
+const SB='https://nqauumyfpdqkkqfjxury.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xYXV1bXlmcGRxa2txZmp4dXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mjk4MDYsImV4cCI6MjA5NTEwNTgwNn0.j-Ql0_eDLiCLRDyEzbzjVtq4mw7ORdk9eLniDR7zyow';
+let stocks=[],prices={},rate=32.5;
+const tblFilters={'dad-old':'all','dad-mine':'all','mom':'all','me':'all'};
+const expanded={};
 
 function g(id){return document.getElementById(id)}
-function fmt(n){return Math.round(n).toLocaleString('zh-TW')}
-function fmtD(n){return n.toFixed(2)}
+function fmt(n,dec=0){return n==null?'—':Number(n).toLocaleString('zh-TW',{minimumFractionDigits:dec,maximumFractionDigits:dec})}
 function pnlCls(v){return v>0?'pos':v<0?'neg':'neu'}
 function sign(v){return v>=0?'+':''}
-function setStatus(txt,err){g('stxt').textContent=txt;g('sdot').className='sdot'+(err?' err':'')}
+function setStatus(txt,err){g('stxt').textContent=txt;g('sdot').className='status-dot'+(err?' err':'')}
 
 async function loadStocks(){
-  const r=await fetch(SB_URL+'/rest/v1/stocks?select=*&order=created_at.asc',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});
+  const r=await fetch(SB+'/rest/v1/stocks?select=*&order=created_at.asc',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
   stocks=await r.json();
 }
-function getSymbol(s){if(s.yahoo_symbol)return s.yahoo_symbol;return s.market==='tw'?s.ticker+'.TW':s.market==='us'?s.ticker:s.ticker+'.'+s.market.toUpperCase()}
+function getSymbol(s){if(s.yahoo_symbol)return s.yahoo_symbol;if(s.market==='us')return s.ticker;return s.ticker+'.TW'}
 function getPrice(s){return prices[getSymbol(s)]??null}
-function getMV(s){if(s.status==='sold')return 0;const p=getPrice(s);if(!p)return null;return(s.market==='us'?p*RATE:p)*s.shares}
-function getCostTWD(s){return(s.market==='us'?s.cost*RATE:s.cost)*s.shares}
-function getRealized(s){if(s.status!=='sold'||s.sell_price==null)return 0;return((s.market==='us'?s.sell_price*RATE:s.sell_price)-(s.market==='us'?s.cost*RATE:s.cost))*s.shares}
+function getMV(s){if(s.status==='sold')return null;const p=getPrice(s);if(p==null)return null;return p*(s.market==='us'?rate:1)*s.shares}
+function getCostTWD(s){return s.cost*(s.market==='us'?rate:1)*s.shares}
+function getRealized(s){if(s.status!=='sold'||s.sell_price==null)return 0;return(s.sell_price-s.cost)*(s.market==='us'?rate:1)*s.shares}
 
 async function fetchPrice(sym){
-  try{
-    const url='https://nqauumyfpdqkkqfjxury.supabase.co/functions/v1/hyper-api?symbol='+encodeURIComponent(sym);
-    const r=await fetch(url);
-    const d=await r.json();
-    if(d.price!=null) return d.price;
-  }catch(e){}
+  try{const r=await fetch(SB+'/functions/v1/hyper-api?symbol='+encodeURIComponent(sym));const d=await r.json();if(d.price!=null)return d.price;}catch(e){}
   return null;
 }
 
-async function fetchAll(){
-  const hs=stocks.filter(s=>s.status!=='sold');if(!hs.length){renderAll();return;}
-  const ic=g('ricon');ic.textContent='⟳';ic.className='spin';
-  setStatus('更新報價中...',false);
-  const syms=[...new Set(hs.map(getSymbol))];
+async function fetchAllPrices(){
+  const holding=stocks.filter(s=>s.status!=='sold');
+  if(!holding.length)return;
+  const syms=[...new Set(holding.map(getSymbol))];
   let ok=0,fail=0;
   await Promise.all(syms.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else fail++;}));
+  return{ok,fail};
+}
+
+async function fetchRate(){
+  try{
+    const r=await fetch(SB+'/functions/v1/hyper-api?symbol=TWD%3DX');
+    const d=await r.json();
+    if(d.price){rate=d.price;g('rate-display').textContent=rate.toFixed(2);const now=new Date();g('rate-time').textContent='更新於 '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');}
+  }catch(e){}
+}
+
+async function init(){
+  const ic=g('ricon');ic.textContent='⟳';ic.className='spin';
+  setStatus('更新中...',false);
+  await fetchRate();
+  const result=await fetchAllPrices();
   ic.className='';ic.textContent='↻';
-  const now=new Date(),t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  setStatus(fail===0?'已更新 '+t:ok+'成功/'+fail+'失敗',fail>0);
+  if(result){
+    const now=new Date(),t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    setStatus(result.fail===0?'已更新 '+t:result.ok+'成功/'+result.fail+'失敗',result.fail>0);
+  }else setStatus('尚無持股',false);
   renderAll();
 }
 
@@ -199,131 +223,169 @@ function groupStocks(list){
   const map={};
   list.forEach(s=>{
     const key=s.ticker+'|'+s.owner+'|'+s.status;
-    if(!map[key])map[key]={ticker:s.ticker,market:s.market,owner:s.owner,status:s.status,op_type:s.op_type||'none',name:s.name||'',yahoo_symbol:s.yahoo_symbol||null,batches:[],totalShares:0,totalCostTWD:0,totalRealized:0};
-    const g=map[key];g.batches.push(s);g.totalShares+=Number(s.shares)||0;g.totalCostTWD+=getCostTWD(s);g.totalRealized+=getRealized(s);
-    if(s.name&&!g.name)g.name=s.name;if(s.op_type==='mine')g.op_type='mine';if(s.op_type==='old')g.op_type=g.op_type==='mine'?'mine':'old';
+    if(!map[key])map[key]={ticker:s.ticker,name:s.name||'',market:s.market,owner:s.owner,status:s.status,op_type:s.op_type||'none',yahoo_symbol:s.yahoo_symbol||null,batches:[],totalShares:0,totalCostTWD:0,totalRealized:0};
+    const g=map[key];
+    g.batches.push(s);g.totalShares+=Number(s.shares)||0;g.totalCostTWD+=getCostTWD(s);g.totalRealized+=getRealized(s);
+    if(s.name&&!g.name)g.name=s.name;
+    if(s.op_type==='mine')g.op_type='mine';
+    if(s.op_type==='old'&&g.op_type==='none')g.op_type='old';
+    if(s.yahoo_symbol&&!g.yahoo_symbol)g.yahoo_symbol=s.yahoo_symbol;
   });
   return Object.values(map);
 }
 
-function renderSummary(){
-  let totV=0,totC=0,totReal=0;
-  const acc={dad:{v:0,c:0,real:0,myUnreal:0,myC:0,myReal:0,n:0},mom:{v:0,c:0,real:0,n:0},me:{v:0,c:0,real:0,n:0}};
-  stocks.forEach(s=>{
-    const mv=getMV(s);const c=getCostTWD(s);const real=getRealized(s);
-    totReal+=real;if(mv!==null){totV+=mv;totC+=c;}
-    const o=s.owner;if(acc[o]){if(mv!==null){acc[o].v+=mv;acc[o].c+=c;}acc[o].real+=real;acc[o].n++;}
-    if(o==='dad'&&s.op_type==='mine'){if(mv!==null&&s.status!=='sold'){acc.dad.myUnreal+=mv-c;acc.dad.myC+=c;}acc.dad.myReal+=real;}
-  });
-  const pnl=totV-totC,pct=totC>0?pnl/totC*100:0,sc=pnlCls(pnl);
-  g('s-total').textContent=stocks.length?'$'+fmt(totV):'—';
-  const pe=g('s-pnl');pe.textContent=stocks.length?sign(pnl)+'$'+fmt(Math.abs(pnl)):'—';pe.className='val '+sc;
-  const ppe=g('s-pct');ppe.textContent=stocks.length?sign(pnl)+pct.toFixed(1)+'%':'';ppe.className='sub '+sc;
-  const re=g('s-realized');re.textContent=sign(totReal)+'$'+fmt(Math.abs(totReal));re.className='val '+pnlCls(totReal);
-  g('s-count').textContent=new Set(stocks.filter(s=>s.status!=='sold').map(s=>s.ticker)).size;
-  g('s-mkt').textContent='台股 '+new Set(stocks.filter(s=>s.market==='tw'&&s.status!=='sold').map(s=>s.ticker)).size+' ／ 美股 '+new Set(stocks.filter(s=>s.market==='us'&&s.status!=='sold').map(s=>s.ticker)).size;
-  const myTotal=acc.dad.myUnreal+acc.dad.myReal,myPct=acc.dad.myC>0?myTotal/acc.dad.myC*100:0;
-  g('op-cost').textContent=acc.dad.myC>0?'$'+fmt(acc.dad.myC):'—';
-  const ue=g('op-unreal');ue.textContent=acc.dad.myC>0?sign(acc.dad.myUnreal)+'$'+fmt(Math.abs(acc.dad.myUnreal)):'—';ue.className='val '+pnlCls(acc.dad.myUnreal);
-  g('op-unreal-pct').textContent=acc.dad.myC>0?sign(acc.dad.myUnreal)+(acc.dad.myC>0?(acc.dad.myUnreal/acc.dad.myC*100).toFixed(1):0)+'%':'';
-  const re2=g('op-real');re2.textContent=acc.dad.myReal!==0?sign(acc.dad.myReal)+'$'+fmt(Math.abs(acc.dad.myReal)):'$0';re2.className='val '+pnlCls(acc.dad.myReal);
-  const te=g('op-total');te.textContent=acc.dad.myC>0?sign(myTotal)+'$'+fmt(Math.abs(myTotal)):'—';te.className='val '+pnlCls(myTotal);
-  g('op-total-pct').textContent=acc.dad.myC>0?sign(myTotal)+myPct.toFixed(1)+'%':'';
-  const dadPnl=acc.dad.v-acc.dad.c,dCls=pnlCls(dadPnl);
-  g('a-dad-n').textContent=acc.dad.n+' 筆';g('a-dad-val').textContent=acc.dad.v?'$'+fmt(acc.dad.v):'—';
-  const dpe=g('a-dad-pnl');dpe.textContent=acc.dad.c?sign(dadPnl)+'$'+fmt(Math.abs(dadPnl)):'—';dpe.className='v '+dCls;
-  const dre=g('a-dad-real');dre.textContent=sign(acc.dad.real)+'$'+fmt(Math.abs(acc.dad.real));dre.className='v '+pnlCls(acc.dad.real);
-  const dop=g('a-dad-op');
-  if(acc.dad.myC>0){const ms=sign(myTotal);dop.textContent=ms+'$'+fmt(Math.abs(myTotal))+' ('+ms+myPct.toFixed(1)+'%)';dop.className='oval '+pnlCls(myTotal);}
-  else{dop.textContent='—';dop.className='oval neu';}
-  [['mom','a-mom'],['me','a-me']].forEach(([o,pre])=>{
-    const d=acc[o],opnl=d.v-d.c,oc=pnlCls(opnl);
-    g(pre+'-n').textContent=d.n+' 筆';g(pre+'-val').textContent=d.v?'$'+fmt(d.v):'—';
-    const pe2=g(pre+'-pnl');pe2.textContent=d.c?sign(opnl)+'$'+fmt(Math.abs(opnl)):'—';pe2.className='v '+oc;
-    const re3=g(pre+'-real');re3.textContent=sign(d.real)+'$'+fmt(Math.abs(d.real));re3.className='v '+pnlCls(d.real);
-    const ce=g(pre+'-cost');if(ce)ce.textContent=d.c?'$'+fmt(d.c):'—';
-  });
+function filterList(list,filter){
+  if(filter==='holding')return list.filter(s=>s.status!=='sold');
+  if(filter==='sold')return list.filter(s=>s.status==='sold');
+  if(filter==='tw')return list.filter(s=>s.market==='tw');
+  if(filter==='us')return list.filter(s=>s.market==='us');
+  return list;
 }
 
-function renderTable(){
-  const tbody=g('tbody');
-  let list=stocks.slice();
-  if(curFilter==='holding')list=list.filter(s=>s.status!=='sold');
-  else if(curFilter==='sold')list=list.filter(s=>s.status==='sold');
-  else if(curFilter==='tw')list=list.filter(s=>s.market==='tw');
-  else if(curFilter==='us')list=list.filter(s=>s.market==='us');
-  else if(curFilter==='dad')list=list.filter(s=>s.owner==='dad');
-  else if(curFilter==='mom')list=list.filter(s=>s.owner==='mom');
-  else if(curFilter==='me')list=list.filter(s=>s.owner==='me');
-  if(!list.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:3rem">尚無資料</td></tr>';return;}
-  const groups=groupStocks(list);
-  const ownerLabel={dad:'爸爸',mom:'媽媽',me:'我'};
+function renderTbl(tbodyId,list,tableKey){
+  const tbody=g(tbodyId);
+  const filtered=filterList(list,tblFilters[tableKey]);
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:1.5rem">尚無資料</td></tr>';return;}
+  const groups=groupStocks(filtered);
   let html='';
   groups.forEach(grp=>{
-    const sym=grp.yahoo_symbol||(grp.market==='tw'?grp.ticker+'.TW':grp.market==='us'?grp.ticker:grp.ticker+'.'+grp.market.toUpperCase());
+    const sym=grp.yahoo_symbol||(grp.market==='tw'?grp.ticker+'.TW':grp.ticker);
     const p=prices[sym];const isUS=grp.market==='us';const isSold=grp.status==='sold';
-    const mv=isSold?null:(p?(isUS?p*RATE:p)*grp.totalShares:null);
+    const mv=isSold?null:(p?p*(isUS?rate:1)*grp.totalShares:null);
     const c=grp.totalCostTWD;
     const pnl=isSold?grp.totalRealized:(mv!=null?mv-c:null);
     const pct=pnl!=null&&c>0?pnl/c*100:null;
     const sg=sign(pnl||0),cls=pnl!=null?pnlCls(pnl):'neu';
-    const avgCostOrig=grp.totalShares>0?(isUS?c/grp.totalShares/RATE:c/grp.totalShares):0;
-    const isDCA=grp.batches.length>1;
-    const gkey=grp.ticker+'|'+grp.owner+'|'+grp.status;
+    const avgCost=grp.totalShares>0?c/grp.totalShares:0;
+    const avgCostDisp=isUS?'US$'+fmt(avgCost/rate,2):'$'+fmt(avgCost);
+    const priceDisp=isSold?'已出清':(p?(isUS?'US$'+fmt(p,2):'$'+fmt(p)):'—');
+    const multi=grp.batches.length>1;
+    const gkey=tbodyId+'|'+grp.ticker+'|'+grp.status;
     const isOpen=expanded[gkey];
-    const priceStr=isSold?'已出清':(p?(isUS?'$'+fmtD(p):fmt(p)):'—');
-    html+=`<tr class="group-row" onclick="toggleGroup('${gkey}')">
-      <td><button class="expand-btn ${isDCA?(isOpen?'open':''):''}" style="${isDCA?'':'visibility:hidden'}">${isDCA?'▶':''}</button></td>
-      <td><span style="font-weight:500">${grp.ticker}</span>
-        <span class="badge ${isUS?'us-b':'tw-b'}">${isUS?'美':'台'}</span>
-        ${grp.op_type==='mine'?'<span class="badge op-b">操盤</span>':''}
-        ${grp.op_type==='old'?'<span class="badge old-b">舊股</span>':''}
-        
-        ${isSold?'<span class="badge sold-b">已出清</span>':''}
-        ${grp.name?`<div style="font-size:11px;color:var(--text2);margin-top:2px">${grp.name}</div>`:''}
-      </td>
-      <td class="r">${priceStr}</td>
-      <td class="r" style="color:var(--text2)">${isUS?'$'+fmtD(avgCostOrig):fmt(avgCostOrig)}</td>
+    html+=`<tr class="gr" onclick="toggleGrp('${gkey}')">
+      <td><button class="exp ${multi?(isOpen?'open':''):''}" style="${multi?'':'visibility:hidden'}">${multi?'▶':''}</button></td>
+      <td><b>${grp.ticker}</b><span class="badge ${isUS?'b-us':'b-tw'}">${isUS?'US':'TW'}</span>${isSold?'<span class="badge b-sold">出清</span>':''}<div style="font-size:11px;color:var(--text2)">${grp.name}</div></td>
+      <td class="r">${priceDisp}</td>
+      <td class="r" style="color:var(--text2)">${avgCostDisp}</td>
       <td class="r">${fmt(grp.totalShares)}</td>
       <td class="r">${mv!=null?'$'+fmt(mv):'—'}</td>
       <td class="r ${cls}">${pnl!=null?sg+'$'+fmt(Math.abs(pnl)):'—'}</td>
       <td class="r ${cls}">${pct!=null?sg+pct.toFixed(1)+'%':'—'}</td>
-      <td style="color:var(--text2)">${ownerLabel[grp.owner]||grp.owner}</td>
     </tr>`;
-    if(isDCA&&isOpen){
+    if(multi&&isOpen){
       grp.batches.forEach((s,bi)=>{
-        const bMV=isSold?null:(p?(isUS?p*RATE:p)*s.shares:null);
-        const bCostTWD=getCostTWD(s);const bReal=getRealized(s);
-        const bPnl=isSold?bReal:(bMV!=null?bMV-bCostTWD:null);
-        const bPct=bPnl!=null&&bCostTWD>0?bPnl/bCostTWD*100:null;
+        const bMV=isSold?null:(p?p*(isUS?rate:1)*s.shares:null);
+        const bC=getCostTWD(s);const bR=getRealized(s);
+        const bPnl=isSold?bR:(bMV!=null?bMV-bC:null);
+        const bPct=bPnl!=null&&bC>0?bPnl/bC*100:null;
         const bsg=sign(bPnl||0),bcls=bPnl!=null?pnlCls(bPnl):'neu';
-        html+=`<tr class="detail-row">
-          <td></td><td style="padding-left:20px">批次 ${bi+1}${s.buy_date?' · '+s.buy_date:''}</td>
-          <td class="r">${priceStr}</td>
-          <td class="r">${isUS?'$'+s.cost.toFixed(2):fmt(s.cost)}</td>
-          <td class="r">${fmt(s.shares)}</td>
-          <td class="r">${bMV!=null?'$'+fmt(bMV):'—'}</td>
-          <td class="r ${bcls}">${bPnl!=null?bsg+'$'+fmt(Math.abs(bPnl)):'—'}</td>
-          <td class="r ${bcls}">${bPct!=null?bsg+bPct.toFixed(1)+'%':'—'}</td>
-          <td></td>
-        </tr>`;
+        const dateLabel=s.buy_date?s.buy_date:('批次 '+(bi+1));
+        html+=`<tr class="dr"><td></td><td style="padding-left:16px">📅 ${dateLabel}</td><td class="r">${priceDisp}</td><td class="r">${isUS?'US$'+fmt(s.cost,2):'$'+fmt(s.cost)}</td><td class="r">${fmt(s.shares)}</td><td class="r">${bMV!=null?'$'+fmt(bMV):'—'}</td><td class="r ${bcls}">${bPnl!=null?bsg+'$'+fmt(Math.abs(bPnl)):'—'}</td><td class="r ${bcls}">${bPct!=null?bsg+bPct.toFixed(1)+'%':'—'}</td></tr>`;
       });
     }
   });
   tbody.innerHTML=html;
 }
 
-function toggleGroup(key){expanded[key]=!expanded[key];renderTable()}
-function renderAll(){renderSummary();renderTable()}
-function filter(f,btn){curFilter=f;document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderTable()}
+function toggleGrp(key){expanded[key]=!expanded[key];renderAll()}
 
-async function init(){
-  setStatus('載入中...',false);
-  try{await loadStocks();renderAll();if(stocks.filter(s=>s.status!=='sold').length)await fetchAll();else setStatus('尚無持股',false);}
-  catch(e){setStatus('載入失敗',true);}
+function setTblFilter(tableKey,filter,btn){
+  tblFilters[tableKey]=filter;
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  renderAll();
 }
-init();
-setInterval(async()=>{if(stocks.filter(s=>s.status!=='sold').length)await fetchAll();},5*60*1000);
+
+function calcStats(list){
+  let mv=0,cost=0,real=0,hasMV=false;
+  list.forEach(s=>{
+    const m=getMV(s);const c=getCostTWD(s);const r=getRealized(s);
+    real+=r;
+    if(m!=null){mv+=m;cost+=c;hasMV=true;}
+  });
+  return{mv,cost,real,unreal:mv-cost,pct:cost>0?(mv-cost)/cost*100:0};
+}
+
+function setMetric(id,val,extra){
+  const e=g(id);if(!e)return;
+  e.textContent=val;
+  if(extra!==undefined)e.className='val '+extra;
+}
+
+function renderAll(){
+  // Global
+  const allStats=calcStats(stocks);
+  g('g-total').textContent='$'+fmt(allStats.mv);
+  const gue=g('g-unreal');gue.textContent=(allStats.unreal>=0?'+':'')+' $'+fmt(Math.abs(allStats.unreal));gue.className='val '+pnlCls(allStats.unreal);
+  const gup=g('g-unreal-p');gup.textContent=(allStats.unreal>=0?'+':'')+allStats.pct.toFixed(1)+'%';gup.className='sub '+pnlCls(allStats.unreal);
+  const gre=g('g-real');gre.textContent=(allStats.real>=0?'+':'-')+' $'+fmt(Math.abs(allStats.real));gre.className='val '+pnlCls(allStats.real);
+  const twMV=stocks.filter(s=>s.market==='tw'&&s.status!=='sold').reduce((a,s)=>{const m=getMV(s);return a+(m||0);},0);
+  const usMV=stocks.filter(s=>s.market==='us'&&s.status!=='sold').reduce((a,s)=>{const m=getMV(s);return a+(m||0);},0);
+  g('g-tw').textContent='$'+fmt(twMV);
+  g('g-us').textContent='US$'+fmt(usMV/rate,0);
+
+  // Dad old
+  const dadOld=stocks.filter(s=>s.owner==='dad'&&(s.op_type==='old'||s.op_type==='none'));
+  const d1=calcStats(dadOld);
+  g('dad1-mv').textContent='$'+fmt(d1.mv);
+  const d1ue=g('dad1-unreal');d1ue.textContent=(d1.unreal>=0?'+':'')+' $'+fmt(Math.abs(d1.unreal));d1ue.className='val '+pnlCls(d1.unreal);
+  const d1up=g('dad1-unreal-p');d1up.textContent=(d1.unreal>=0?'+':'')+d1.pct.toFixed(1)+'%';d1up.className=pnlCls(d1.unreal);
+  const d1re=g('dad1-real');d1re.textContent=(d1.real>=0?'+':'-')+' $'+fmt(Math.abs(d1.real));d1re.className='val '+pnlCls(d1.real);
+  renderTbl('dad1-tbody',dadOld,'dad-old');
+
+  // Dad mine
+  const dadMine=stocks.filter(s=>s.owner==='dad'&&s.op_type==='mine');
+  const d2holding=dadMine.filter(s=>s.status!=='sold');
+  const d2sold=dadMine.filter(s=>s.status==='sold');
+  let d2MV=0,d2Cost=0,d2Real=0;
+  d2holding.forEach(s=>{const m=getMV(s);const c=getCostTWD(s);if(m!=null){d2MV+=m;d2Cost+=c;}});
+  d2sold.forEach(s=>{d2Real+=getRealized(s);d2Cost+=getCostTWD(s);});
+  // Cost should only count holding for unrealized
+  let d2CostHolding=0;
+  d2holding.forEach(s=>{const m=getMV(s);if(m!=null)d2CostHolding+=getCostTWD(s);});
+  const d2Unreal=d2MV-d2CostHolding;
+  const d2Total=d2Unreal+d2Real;
+  const d2TotalCost=d2holding.reduce((a,s)=>a+getCostTWD(s),0)+d2sold.reduce((a,s)=>a+getCostTWD(s),0);
+  const d2TotalPct=d2TotalCost>0?d2Total/d2TotalCost*100:0;
+  g('dad2-cost').textContent='$'+fmt(d2TotalCost);
+  g('dad2-mv').textContent='$'+fmt(d2MV);
+  const d2ue=g('dad2-unreal');d2ue.textContent=(d2Unreal>=0?'+':'')+' $'+fmt(Math.abs(d2Unreal));d2ue.className='val '+pnlCls(d2Unreal);
+  const d2up=g('dad2-unreal-p');d2up.textContent=(d2Unreal>=0?'+':'')+( d2CostHolding>0?(d2Unreal/d2CostHolding*100).toFixed(1):0)+'%';d2up.className=pnlCls(d2Unreal);
+  const d2re=g('dad2-real');d2re.textContent=(d2Real>=0?'+':'-')+' $'+fmt(Math.abs(d2Real));d2re.className='val '+pnlCls(d2Real);
+  const d2te=g('dad2-total');d2te.textContent=(d2Total>=0?'+':'')+' $'+fmt(Math.abs(d2Total));d2te.className='val '+pnlCls(d2Total);
+  const d2tp=g('dad2-total-p');d2tp.textContent=(d2Total>=0?'+':'')+d2TotalPct.toFixed(1)+'%';d2tp.className=pnlCls(d2Total);
+  renderTbl('dad2-tbody',dadMine,'dad-mine');
+
+  // Mom
+  const momStocks=stocks.filter(s=>s.owner==='mom');
+  const mStats=calcStats(momStocks);
+  g('mom-cost').textContent='$'+fmt(mStats.cost);
+  g('mom-mv').textContent='$'+fmt(mStats.mv);
+  const mue=g('mom-unreal');mue.textContent=(mStats.unreal>=0?'+':'')+' $'+fmt(Math.abs(mStats.unreal));mue.className='val '+pnlCls(mStats.unreal);
+  const mup=g('mom-unreal-p');mup.textContent=(mStats.unreal>=0?'+':'')+mStats.pct.toFixed(1)+'%';mup.className=pnlCls(mStats.unreal);
+  const mre=g('mom-real');mre.textContent=(mStats.real>=0?'+':'-')+' $'+fmt(Math.abs(mStats.real));mre.className='val '+pnlCls(mStats.real);
+  renderTbl('mom-tbody',momStocks,'mom');
+
+  // Me
+  const meStocks=stocks.filter(s=>s.owner==='me');
+  const meStats=calcStats(meStocks);
+  g('me-cost').textContent='$'+fmt(meStats.cost);
+  g('me-mv').textContent='$'+fmt(meStats.mv);
+  const meue=g('me-unreal');meue.textContent=(meStats.unreal>=0?'+':'')+' $'+fmt(Math.abs(meStats.unreal));meue.className='val '+pnlCls(meStats.unreal);
+  const meup=g('me-unreal-p');meup.textContent=(meStats.unreal>=0?'+':'')+meStats.pct.toFixed(1)+'%';meup.className=pnlCls(meStats.unreal);
+  const mere=g('me-real');mere.textContent=(meStats.real>=0?'+':'-')+' $'+fmt(Math.abs(meStats.real));mere.className='val '+pnlCls(meStats.real);
+  renderTbl('me-tbody',meStocks,'me');
+}
+
+(async()=>{
+  setStatus('載入中...',false);
+  try{
+    await loadStocks();
+    renderAll();
+    if(stocks.filter(s=>s.status!=='sold').length)await init();
+    else setStatus('尚無持股',false);
+  }catch(e){setStatus('載入失敗',true);console.error(e);}
+})();
 </script>
 </body>
 </html>
