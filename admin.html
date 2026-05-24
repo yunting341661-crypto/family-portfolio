@@ -281,13 +281,35 @@ function getRealized(s){
 
 // CORS proxy for Yahoo Finance
 async function fetchPrice(sym){
-  try{
-    const url='https://api.allorigins.win/raw?url='+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?interval=1d&range=1d');
-    const r=await fetch(url);
-    const d=await r.json();
-    const m=d.chart?.result?.[0]?.meta;
-    if(m) return m.regularMarketPrice||m.previousClose||null;
-  }catch(e){}
+  const endpoints=[
+    'https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?interval=1d&range=1d',
+    'https://query2.finance.yahoo.com/v8/finance/chart/'+sym+'?interval=1d&range=1d',
+  ];
+  const proxies=[
+    'https://thingproxy.freeboard.io/fetch/',
+    'https://api.codetabs.com/v1/proxy?quest=',
+  ];
+  // Try direct first
+  for(const url of endpoints){
+    try{
+      const r=await fetch(url,{mode:'cors'});
+      if(!r.ok) continue;
+      const d=await r.json();
+      const m=d.chart?.result?.[0]?.meta;
+      if(m) return m.regularMarketPrice||m.previousClose||null;
+    }catch(e){}
+  }
+  // Try via proxy
+  for(const proxy of proxies){
+    try{
+      const url=proxy+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?interval=1d&range=1d');
+      const r=await fetch(url);
+      if(!r.ok) continue;
+      const d=await r.json();
+      const m=d.chart?.result?.[0]?.meta;
+      if(m) return m.regularMarketPrice||m.previousClose||null;
+    }catch(e){}
+  }
   return null;
 }
 
