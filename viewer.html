@@ -500,7 +500,7 @@ function renderTbl(tbodyId,list,tableKey){
       <td class="r ${cls}">${pct!=null?sg+pct.toFixed(1)+'%':'—'}</td>
     </tr>`;
     if(multi&&isOpen){
-      grp.batches.forEach((s,bi)=>{
+      grp.batches.slice().sort((a,b)=>{const da=a.buy_date||'9999',db=b.buy_date||'9999';return da<db?-1:da>db?1:0;}).forEach((s,bi)=>{
         const bMV=isSold?null:(p?p*(isUS?rate:1)*s.shares:null);
         const bC=getCostTWD(s);const bR=getRealized(s);
         const bPnl=isSold?bR:(bMV!=null?bMV-bC:null);

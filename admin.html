@@ -386,7 +386,7 @@ function renderTable(){
     </tr>`;
 
     if(multi&&isOpen){
-      grp.batches.forEach((s,bi)=>{
+      grp.batches.slice().sort((a,b)=>{const da=a.buy_date||'9999',db=b.buy_date||'9999';return da<db?-1:da>db?1:0;}).forEach((s,bi)=>{
         const bMV=isSold?null:(p?(p*(isUS?getRate():1))*s.shares:null);
         const bC=getCostTWD(s);
         const bPnl=isSold?getRealized(s):(bMV!=null?bMV-bC:null);
@@ -481,6 +481,7 @@ async function doAdd(){
     await sbFetch('POST','stocks',{ticker:tkr,name:name||null,market:mkt,shares:shr,cost,owner:own,op_type:optype,status,sell_price:sprice||null,sell_date:sdate,buy_date:bdate,yahoo_symbol:yahoo});
     await loadStocks();closeAddModal();
     ['m-tkr','m-name','m-yahoo','m-shr','m-cost','m-bdate','m-sprice','m-sdate'].forEach(id=>g(id).value='');
+    sortKey=null;sortDir=1;document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('asc','desc'));
     await refreshAll();
   }catch(e){errEl.textContent='失敗：'+e.message;errEl.style.display='block';}
 }
