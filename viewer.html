@@ -78,6 +78,13 @@ tr.dr td{background:var(--bg2);font-size:11px;color:var(--text2);padding:5px 10p
 .spin{animation:spin 1s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
 .no-data{text-align:center;color:var(--text3);padding:2rem;font-size:12px}
+
+.sort-btn{background:none;border:none;cursor:pointer;color:var(--text2);font-size:11px;padding:0;display:inline-flex;align-items:center;gap:3px;font-weight:500}
+.sort-btn:hover{color:var(--text)}
+.sort-btn .arr{font-size:9px;opacity:.4}
+.sort-btn.asc .arr::after{content:'▲';opacity:1}
+.sort-btn.desc .arr::after{content:'▼';opacity:1}
+.sort-btn .arr::after{content:'▲▼'}
 </style>
 </head>
 <body>
@@ -144,7 +151,14 @@ tr.dr td{background:var(--bg2);font-size:11px;color:var(--text2);padding:5px 10p
         <button class="tab" onclick="setTblFilter('dad-old','holding',this)">持有中</button>
         <button class="tab" onclick="setTblFilter('dad-old','sold',this)">已出清</button>
       </div>
-      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="dad1-tbody"></tbody></table></div>
+      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th>
+        <th><button class="sort-btn" onclick="setSort('ticker',this)">股票<span class="arr"></span></button></th>
+        <th class="r">現價</th><th class="r">成本</th>
+        <th class="r"><button class="sort-btn" onclick="setSort('shares',this)">股數<span class="arr"></span></button></th>
+        <th class="r">市值</th>
+        <th class="r"><button class="sort-btn" onclick="setSort('pnl',this)">損益<span class="arr"></span></button></th>
+        <th class="r"><button class="sort-btn" onclick="setSort('pct',this)">損益%<span class="arr"></span></button></th>
+        </tr></thead><tbody id="dad1-tbody"></tbody></table></div>
     </div>
     <div class="block">
       <div class="block-head"><h2>區塊二：操盤部位</h2><span class="tag tag-mine">操盤</span></div>
@@ -160,7 +174,14 @@ tr.dr td{background:var(--bg2);font-size:11px;color:var(--text2);padding:5px 10p
         <button class="tab" onclick="setTblFilter('dad-mine','holding',this)">持有中</button>
         <button class="tab" onclick="setTblFilter('dad-mine','sold',this)">已出清</button>
       </div>
-      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="dad2-tbody"></tbody></table></div>
+      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th>
+        <th><button class="sort-btn" onclick="setSort('ticker',this)">股票<span class="arr"></span></button></th>
+        <th class="r">現價</th><th class="r">成本</th>
+        <th class="r"><button class="sort-btn" onclick="setSort('shares',this)">股數<span class="arr"></span></button></th>
+        <th class="r">市值</th>
+        <th class="r"><button class="sort-btn" onclick="setSort('pnl',this)">損益<span class="arr"></span></button></th>
+        <th class="r"><button class="sort-btn" onclick="setSort('pct',this)">損益%<span class="arr"></span></button></th>
+        </tr></thead><tbody id="dad2-tbody"></tbody></table></div>
     </div>
   </div>
 </div>
@@ -196,7 +217,14 @@ tr.dr td{background:var(--bg2);font-size:11px;color:var(--text2);padding:5px 10p
         <button class="tab" onclick="setTblFilter('mom','tw',this)">台股</button>
         <button class="tab" onclick="setTblFilter('mom','us',this)">美股</button>
       </div>
-      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="mom-tbody"></tbody></table></div>
+      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th>
+        <th><button class="sort-btn" onclick="setSort('ticker',this)">股票<span class="arr"></span></button></th>
+        <th class="r">現價</th><th class="r">成本</th>
+        <th class="r"><button class="sort-btn" onclick="setSort('shares',this)">股數<span class="arr"></span></button></th>
+        <th class="r">市值</th>
+        <th class="r"><button class="sort-btn" onclick="setSort('pnl',this)">損益<span class="arr"></span></button></th>
+        <th class="r"><button class="sort-btn" onclick="setSort('pct',this)">損益%<span class="arr"></span></button></th>
+        </tr></thead><tbody id="mom-tbody"></tbody></table></div>
     </div>
   </div>
 </div>
@@ -232,7 +260,14 @@ tr.dr td{background:var(--bg2);font-size:11px;color:var(--text2);padding:5px 10p
         <button class="tab" onclick="setTblFilter('me','tw',this)">台股</button>
         <button class="tab" onclick="setTblFilter('me','us',this)">美股</button>
       </div>
-      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="me-tbody"></tbody></table></div>
+      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th>
+        <th><button class="sort-btn" onclick="setSort('ticker',this)">股票<span class="arr"></span></button></th>
+        <th class="r">現價</th><th class="r">成本</th>
+        <th class="r"><button class="sort-btn" onclick="setSort('shares',this)">股數<span class="arr"></span></button></th>
+        <th class="r">市值</th>
+        <th class="r"><button class="sort-btn" onclick="setSort('pnl',this)">損益<span class="arr"></span></button></th>
+        <th class="r"><button class="sort-btn" onclick="setSort('pct',this)">損益%<span class="arr"></span></button></th>
+        </tr></thead><tbody id="me-tbody"></tbody></table></div>
     </div>
   </div>
 </div>
@@ -438,7 +473,7 @@ function renderTbl(tbodyId,list,tableKey){
   const tbody=g(tbodyId);
   const filtered=filterList(list,tblFilters[tableKey]);
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="8" class="no-data">尚無資料</td></tr>';return;}
-  const groups=groupStocks(filtered);
+  const groups=sortGroups(groupStocks(filtered));
   let html='';
   groups.forEach(grp=>{
     const sym=grp.yahoo_symbol||(grp.market==='tw'?grp.ticker+'.TW':grp.ticker);
@@ -486,6 +521,46 @@ function setTblFilter(tableKey,filter,btn){
   btn.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   btn.classList.add('on');
   renderAll();
+}
+
+
+let sortKey=null,sortDir=1;
+function setSort(key,btn){
+  if(sortKey===key){sortDir*=-1;}else{sortKey=key;sortDir=1;}
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('asc','desc'));
+  btn.classList.add(sortDir===1?'asc':'desc');
+  renderAll();
+}
+function sortGroups(groups){
+  if(!sortKey)return groups;
+  return [...groups].sort((a,b)=>{
+    let va,vb;
+    if(sortKey==='ticker'){va=a.ticker;vb=b.ticker;return sortDir*(va<vb?-1:va>vb?1:0);}
+    if(sortKey==='shares'){va=a.totalShares;vb=b.totalShares;}
+    if(sortKey==='pnl'){
+      const symA=a.yahoo_symbol||(a.market==='tw'?a.ticker+'.TW':a.ticker);
+      const symB=b.yahoo_symbol||(b.market==='tw'?b.ticker+'.TW':b.ticker);
+      const pA=prices[symA];const pB=prices[symB];
+      const mvA=a.status==='sold'?null:(pA?(pA*(a.market==='us'?rate:1))*a.totalShares:null);
+      const mvB=b.status==='sold'?null:(pB?(pB*(b.market==='us'?rate:1))*b.totalShares:null);
+      va=a.status==='sold'?a.totalRealized:(mvA!=null?mvA-a.totalCostTWD:null);
+      vb=b.status==='sold'?b.totalRealized:(mvB!=null?mvB-b.totalCostTWD:null);
+      if(va==null&&vb==null)return 0;if(va==null)return 1;if(vb==null)return -1;
+    }
+    if(sortKey==='pct'){
+      const symA=a.yahoo_symbol||(a.market==='tw'?a.ticker+'.TW':a.ticker);
+      const symB=b.yahoo_symbol||(b.market==='tw'?b.ticker+'.TW':b.ticker);
+      const pA=prices[symA];const pB=prices[symB];
+      const mvA=a.status==='sold'?null:(pA?(pA*(a.market==='us'?rate:1))*a.totalShares:null);
+      const mvB=b.status==='sold'?null:(pB?(pB*(b.market==='us'?rate:1))*b.totalShares:null);
+      const pnlA=a.status==='sold'?a.totalRealized:(mvA!=null?mvA-a.totalCostTWD:null);
+      const pnlB=b.status==='sold'?b.totalRealized:(mvB!=null?mvB-b.totalCostTWD:null);
+      va=pnlA!=null&&a.totalCostTWD>0?pnlA/a.totalCostTWD:null;
+      vb=pnlB!=null&&b.totalCostTWD>0?pnlB/b.totalCostTWD:null;
+      if(va==null&&vb==null)return 0;if(va==null)return 1;if(vb==null)return -1;
+    }
+    return sortDir*(va<vb?-1:va>vb?1:0);
+  });
 }
 
 function renderAll(){

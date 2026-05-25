@@ -76,6 +76,13 @@ tr.dr:hover td{background:var(--bg3)}
 .mbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
 .spin{animation:spin 1s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+.sort-btn{background:none;border:none;cursor:pointer;color:var(--text2);font-size:11px;padding:0;display:inline-flex;align-items:center;gap:3px;font-weight:500}
+.sort-btn:hover{color:var(--text)}
+.sort-btn .arr{font-size:9px;opacity:.4}
+.sort-btn.asc .arr::after{content:'▲';opacity:1}
+.sort-btn.desc .arr::after{content:'▼';opacity:1}
+.sort-btn .arr::after{content:'▲▼'}
 </style>
 </head>
 <body>
@@ -342,7 +349,7 @@ function renderTable(){
   else if(curFilter==='mine')list=list.filter(s=>s.op_type==='mine');
   if(!list.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">尚無資料</td></tr>';return;}
 
-  const groups=groupStocks(list);
+  const groups=sortGroups(groupStocks(list));
   const ownerLabel={dad:'爸爸',mom:'媽媽',me:'我'};
   let html='';
   groups.forEach(grp=>{
@@ -402,6 +409,46 @@ function renderTable(){
     }
   });
   tbody.innerHTML=html;
+}
+
+
+let sortKey=null,sortDir=1;
+function setSort(key,btn){
+  if(sortKey===key){sortDir*=-1;}else{sortKey=key;sortDir=1;}
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('asc','desc'));
+  btn.classList.add(sortDir===1?'asc':'desc');
+  renderAll();
+}
+function sortGroups(groups){
+  if(!sortKey)return groups;
+  return [...groups].sort((a,b)=>{
+    let va,vb;
+    if(sortKey==='ticker'){va=a.ticker;vb=b.ticker;return sortDir*(va<vb?-1:va>vb?1:0);}
+    if(sortKey==='shares'){va=a.totalShares;vb=b.totalShares;}
+    if(sortKey==='pnl'){
+      const symA=a.yahoo_symbol||(a.market==='tw'?a.ticker+'.TW':a.ticker);
+      const symB=b.yahoo_symbol||(b.market==='tw'?b.ticker+'.TW':b.ticker);
+      const pA=prices[symA];const pB=prices[symB];
+      const mvA=a.status==='sold'?null:(pA?(pA*(a.market==='us'?rate:1))*a.totalShares:null);
+      const mvB=b.status==='sold'?null:(pB?(pB*(b.market==='us'?rate:1))*b.totalShares:null);
+      va=a.status==='sold'?a.totalRealized:(mvA!=null?mvA-a.totalCostTWD:null);
+      vb=b.status==='sold'?b.totalRealized:(mvB!=null?mvB-b.totalCostTWD:null);
+      if(va==null&&vb==null)return 0;if(va==null)return 1;if(vb==null)return -1;
+    }
+    if(sortKey==='pct'){
+      const symA=a.yahoo_symbol||(a.market==='tw'?a.ticker+'.TW':a.ticker);
+      const symB=b.yahoo_symbol||(b.market==='tw'?b.ticker+'.TW':b.ticker);
+      const pA=prices[symA];const pB=prices[symB];
+      const mvA=a.status==='sold'?null:(pA?(pA*(a.market==='us'?rate:1))*a.totalShares:null);
+      const mvB=b.status==='sold'?null:(pB?(pB*(b.market==='us'?rate:1))*b.totalShares:null);
+      const pnlA=a.status==='sold'?a.totalRealized:(mvA!=null?mvA-a.totalCostTWD:null);
+      const pnlB=b.status==='sold'?b.totalRealized:(mvB!=null?mvB-b.totalCostTWD:null);
+      va=pnlA!=null&&a.totalCostTWD>0?pnlA/a.totalCostTWD:null;
+      vb=pnlB!=null&&b.totalCostTWD>0?pnlB/b.totalCostTWD:null;
+      if(va==null&&vb==null)return 0;if(va==null)return 1;if(vb==null)return -1;
+    }
+    return sortDir*(va<vb?-1:va>vb?1:0);
+  });
 }
 
 function renderAll(){renderSummary();renderTable()}
