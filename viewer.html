@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>家族投資組合</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#fff;--bg2:#f7f7f5;--bg3:#f0efe8;--text:#1a1a18;--text2:#6b6b66;--text3:#9e9e99;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.2);--pos:#1D9E75;--neg:#D85A30;--r:8px;--rl:12px}
@@ -28,21 +29,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .card .lbl{font-size:11px;color:var(--text2);margin-bottom:4px}
 .card .val{font-size:18px;font-weight:500}
 .card .sub{font-size:11px;margin-top:3px}
-.block{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1.5rem}
-.block-head{display:flex;align-items:center;gap:8px;margin-bottom:1rem}
-.block-head h2{font-size:15px;font-weight:500}
-.block-head .tag{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
-.tag-old{background:#E8E8E4;color:#444}
-.tag-mine{background:#FAEEDA;color:#633806}
-.metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:1rem}
-.metric{background:var(--bg2);border-radius:var(--r);padding:.7rem .9rem}
-.metric .lbl{font-size:11px;color:var(--text2);margin-bottom:3px}
-.metric .val{font-size:16px;font-weight:500}
-.tabs{display:flex;gap:2px;margin-bottom:10px;flex-wrap:wrap}
-.tab{padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;color:var(--text2);border:none;background:transparent}
-.tab.on{background:var(--bg2);color:var(--text);font-weight:500;box-shadow:0 0 0 .5px var(--border2)}
+.chart-box{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1.5rem}
+.chart-box h3{font-size:14px;font-weight:500;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+.chart-box h3 span{font-size:11px;color:var(--text3);font-weight:400}
+.chart-wrap{position:relative;height:220px}
+.person-block{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rl);margin-bottom:1rem;overflow:hidden}
+.person-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;cursor:pointer;user-select:none}
+.person-header:hover{background:var(--bg2)}
+.person-header-left{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px;flex-shrink:0}
+.av-b{background:#E6F1FB;color:#0C447C}.av-t{background:#E1F5EE;color:#085041}.av-a{background:#FAEEDA;color:#633806}
+.person-name{font-size:15px;font-weight:500}
+.person-summary{display:flex;gap:16px;flex-wrap:wrap}
+.person-summary .ps-item{text-align:right}
+.person-summary .ps-lbl{font-size:10px;color:var(--text3)}
+.person-summary .ps-val{font-size:13px;font-weight:500}
+.collapse-icon{font-size:14px;color:var(--text3);transition:transform .2s;flex-shrink:0}
+.collapse-icon.open{transform:rotate(180deg)}
+.person-body{padding:0 1.25rem 1.25rem}
+.block{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;margin-bottom:.75rem}
+.block:last-child{margin-bottom:0}
+.block-head{display:flex;align-items:center;gap:8px;margin-bottom:.75rem}
+.block-head h2{font-size:13px;font-weight:500}
+.block-head .tag{font-size:10px;padding:1px 7px;border-radius:20px;font-weight:500}
+.tag-old{background:#E8E8E4;color:#444}.tag-mine{background:#FAEEDA;color:#633806}
+.metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:.75rem}
+.metric{background:var(--bg);border-radius:var(--r);padding:.6rem .8rem;border:.5px solid var(--border)}
+.metric .lbl{font-size:10px;color:var(--text2);margin-bottom:2px}
+.metric .val{font-size:14px;font-weight:500}
+.tabs{display:flex;gap:2px;margin-bottom:8px;flex-wrap:wrap}
+.tab{padding:3px 10px;border-radius:20px;font-size:11px;cursor:pointer;color:var(--text2);border:none;background:transparent}
+.tab.on{background:var(--bg);color:var(--text);font-weight:500;box-shadow:0 0 0 .5px var(--border2)}
 .tbl-wrap{overflow-x:auto}
-table{width:100%;min-width:560px;border-collapse:collapse;font-size:12px}
+table{width:100%;min-width:520px;border-collapse:collapse;font-size:12px;background:var(--bg);border-radius:var(--r);overflow:hidden}
 th{background:var(--bg2);padding:6px 10px;text-align:left;font-weight:500;color:var(--text2);font-size:11px;border-bottom:.5px solid var(--border)}
 th.r,td.r{text-align:right}
 td{padding:7px 10px;border-bottom:.5px solid var(--border);color:var(--text);vertical-align:middle}
@@ -58,6 +77,7 @@ tr.dr td{background:var(--bg2);font-size:11px;color:var(--text2);padding:5px 10p
 .footer{text-align:center;font-size:11px;color:var(--text3);margin-top:2rem}
 .spin{animation:spin 1s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
+.no-data{text-align:center;color:var(--text3);padding:2rem;font-size:12px}
 </style>
 </head>
 <body>
@@ -78,84 +98,143 @@ tr.dr td{background:var(--bg2);font-size:11px;color:var(--text2);padding:5px 10p
 
 <div class="section-title">整體概況</div>
 <div class="summary-grid">
-  <div class="card"><div class="lbl">總資產（台幣）</div><div class="val" id="g-total">—</div></div>
+  <div class="card"><div class="lbl">家族總資產（台幣）</div><div class="val" id="g-total">—</div></div>
   <div class="card"><div class="lbl">未實現損益</div><div class="val" id="g-unreal">—</div><div class="sub" id="g-unreal-p"></div></div>
   <div class="card"><div class="lbl">已實現損益</div><div class="val" id="g-real">—</div></div>
   <div class="card"><div class="lbl">台股持倉</div><div class="val" id="g-tw">—</div></div>
   <div class="card"><div class="lbl">美股持倉</div><div class="val" id="g-us">—</div></div>
 </div>
 
-<!-- 爸爸 -->
-<div class="section-title">爸爸帳戶</div>
-
-<div class="block">
-  <div class="block-head"><h2>區塊一：原有持股</h2><span class="tag tag-old">舊股</span></div>
-  <div class="metrics-row">
-    <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="dad1-mv">—</div></div>
-    <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="dad1-unreal">—</div><div style="font-size:11px;margin-top:2px" id="dad1-unreal-p"></div></div>
-    <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="dad1-real">—</div></div>
+<!-- 曲線圖 -->
+<div class="chart-box">
+  <h3>資產趨勢 <span id="chart-note">每次更新報價後自動記錄</span></h3>
+  <div class="chart-wrap">
+    <canvas id="assetChart"></canvas>
   </div>
-  <div class="tabs">
-    <button class="tab on" onclick="setTblFilter('dad-old','all',this)">全部</button>
-    <button class="tab" onclick="setTblFilter('dad-old','holding',this)">持有中</button>
-    <button class="tab" onclick="setTblFilter('dad-old','sold',this)">已出清</button>
-  </div>
-  <div class="tbl-wrap" id="dad1-tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="dad1-tbody"></tbody></table></div>
 </div>
 
-<div class="block">
-  <div class="block-head"><h2>區塊二：操盤部位</h2><span class="tag tag-mine">操盤</span></div>
-  <div class="metrics-row">
-    <div class="metric"><div class="lbl">投入成本</div><div class="val" id="dad2-cost">—</div></div>
-    <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="dad2-mv">—</div></div>
-    <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="dad2-unreal">—</div><div style="font-size:11px;margin-top:2px" id="dad2-unreal-p"></div></div>
-    <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="dad2-real">—</div></div>
-    <div class="metric"><div class="lbl">操盤總損益</div><div class="val" id="dad2-total">—</div><div style="font-size:11px;margin-top:2px" id="dad2-total-p"></div></div>
+<!-- 爸爸 -->
+<div class="section-title">各帳戶</div>
+
+<div class="person-block" id="block-dad">
+  <div class="person-header" onclick="toggleBlock('dad')">
+    <div class="person-header-left">
+      <div class="avatar av-b">爸</div>
+      <div class="person-name">爸爸</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="person-summary">
+        <div class="ps-item"><div class="ps-lbl">市值</div><div class="ps-val" id="dad-summary-mv">—</div></div>
+        <div class="ps-item"><div class="ps-lbl">未實現</div><div class="ps-val" id="dad-summary-unreal">—</div></div>
+        <div class="ps-item"><div class="ps-lbl">已實現</div><div class="ps-val" id="dad-summary-real">—</div></div>
+      </div>
+      <div class="collapse-icon open" id="icon-dad">▼</div>
+    </div>
   </div>
-  <div class="tabs">
-    <button class="tab on" onclick="setTblFilter('dad-mine','all',this)">全部</button>
-    <button class="tab" onclick="setTblFilter('dad-mine','holding',this)">持有中</button>
-    <button class="tab" onclick="setTblFilter('dad-mine','sold',this)">已出清</button>
+  <div class="person-body" id="body-dad">
+    <div class="block">
+      <div class="block-head"><h2>區塊一：原有持股</h2><span class="tag tag-old">舊股</span></div>
+      <div class="metrics-row">
+        <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="dad1-mv">—</div></div>
+        <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="dad1-unreal">—</div><div style="font-size:10px;margin-top:1px" id="dad1-unreal-p"></div></div>
+        <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="dad1-real">—</div></div>
+      </div>
+      <div class="tabs">
+        <button class="tab on" onclick="setTblFilter('dad-old','all',this)">全部</button>
+        <button class="tab" onclick="setTblFilter('dad-old','holding',this)">持有中</button>
+        <button class="tab" onclick="setTblFilter('dad-old','sold',this)">已出清</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="dad1-tbody"></tbody></table></div>
+    </div>
+    <div class="block">
+      <div class="block-head"><h2>區塊二：操盤部位</h2><span class="tag tag-mine">操盤</span></div>
+      <div class="metrics-row">
+        <div class="metric"><div class="lbl">投入成本</div><div class="val" id="dad2-cost">—</div></div>
+        <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="dad2-mv">—</div></div>
+        <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="dad2-unreal">—</div><div style="font-size:10px;margin-top:1px" id="dad2-unreal-p"></div></div>
+        <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="dad2-real">—</div></div>
+        <div class="metric"><div class="lbl">操盤總損益</div><div class="val" id="dad2-total">—</div><div style="font-size:10px;margin-top:1px" id="dad2-total-p"></div></div>
+      </div>
+      <div class="tabs">
+        <button class="tab on" onclick="setTblFilter('dad-mine','all',this)">全部</button>
+        <button class="tab" onclick="setTblFilter('dad-mine','holding',this)">持有中</button>
+        <button class="tab" onclick="setTblFilter('dad-mine','sold',this)">已出清</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="dad2-tbody"></tbody></table></div>
+    </div>
   </div>
-  <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="dad2-tbody"></tbody></table></div>
 </div>
 
 <!-- 媽媽 -->
-<div class="section-title">媽媽帳戶</div>
-<div class="block">
-  <div class="metrics-row">
-    <div class="metric"><div class="lbl">投入成本</div><div class="val" id="mom-cost">—</div></div>
-    <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="mom-mv">—</div></div>
-    <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="mom-unreal">—</div><div style="font-size:11px;margin-top:2px" id="mom-unreal-p"></div></div>
-    <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="mom-real">—</div></div>
+<div class="person-block" id="block-mom">
+  <div class="person-header" onclick="toggleBlock('mom')">
+    <div class="person-header-left">
+      <div class="avatar av-t">媽</div>
+      <div class="person-name">媽媽</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="person-summary">
+        <div class="ps-item"><div class="ps-lbl">市值</div><div class="ps-val" id="mom-summary-mv">—</div></div>
+        <div class="ps-item"><div class="ps-lbl">未實現</div><div class="ps-val" id="mom-summary-unreal">—</div></div>
+        <div class="ps-item"><div class="ps-lbl">已實現</div><div class="ps-val" id="mom-summary-real">—</div></div>
+      </div>
+      <div class="collapse-icon open" id="icon-mom">▼</div>
+    </div>
   </div>
-  <div class="tabs">
-    <button class="tab on" onclick="setTblFilter('mom','all',this)">全部</button>
-    <button class="tab" onclick="setTblFilter('mom','holding',this)">持有中</button>
-    <button class="tab" onclick="setTblFilter('mom','sold',this)">已出清</button>
-    <button class="tab" onclick="setTblFilter('mom','tw',this)">台股</button>
-    <button class="tab" onclick="setTblFilter('mom','us',this)">美股</button>
+  <div class="person-body" id="body-mom">
+    <div class="block">
+      <div class="metrics-row">
+        <div class="metric"><div class="lbl">投入成本</div><div class="val" id="mom-cost">—</div></div>
+        <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="mom-mv">—</div></div>
+        <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="mom-unreal">—</div><div style="font-size:10px;margin-top:1px" id="mom-unreal-p"></div></div>
+        <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="mom-real">—</div></div>
+      </div>
+      <div class="tabs">
+        <button class="tab on" onclick="setTblFilter('mom','all',this)">全部</button>
+        <button class="tab" onclick="setTblFilter('mom','holding',this)">持有中</button>
+        <button class="tab" onclick="setTblFilter('mom','sold',this)">已出清</button>
+        <button class="tab" onclick="setTblFilter('mom','tw',this)">台股</button>
+        <button class="tab" onclick="setTblFilter('mom','us',this)">美股</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="mom-tbody"></tbody></table></div>
+    </div>
   </div>
-  <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="mom-tbody"></tbody></table></div>
 </div>
 
 <!-- 我 -->
-<div class="section-title">我的帳戶</div>
-<div class="block">
-  <div class="metrics-row">
-    <div class="metric"><div class="lbl">投入成本</div><div class="val" id="me-cost">—</div></div>
-    <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="me-mv">—</div></div>
-    <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="me-unreal">—</div><div style="font-size:11px;margin-top:2px" id="me-unreal-p"></div></div>
-    <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="me-real">—</div></div>
+<div class="person-block" id="block-me">
+  <div class="person-header" onclick="toggleBlock('me')">
+    <div class="person-header-left">
+      <div class="avatar av-a">我</div>
+      <div class="person-name">我</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="person-summary">
+        <div class="ps-item"><div class="ps-lbl">市值</div><div class="ps-val" id="me-summary-mv">—</div></div>
+        <div class="ps-item"><div class="ps-lbl">未實現</div><div class="ps-val" id="me-summary-unreal">—</div></div>
+        <div class="ps-item"><div class="ps-lbl">已實現</div><div class="ps-val" id="me-summary-real">—</div></div>
+      </div>
+      <div class="collapse-icon open" id="icon-me">▼</div>
+    </div>
   </div>
-  <div class="tabs">
-    <button class="tab on" onclick="setTblFilter('me','all',this)">全部</button>
-    <button class="tab" onclick="setTblFilter('me','holding',this)">持有中</button>
-    <button class="tab" onclick="setTblFilter('me','sold',this)">已出清</button>
-    <button class="tab" onclick="setTblFilter('me','tw',this)">台股</button>
-    <button class="tab" onclick="setTblFilter('me','us',this)">美股</button>
+  <div class="person-body" id="body-me">
+    <div class="block">
+      <div class="metrics-row">
+        <div class="metric"><div class="lbl">投入成本</div><div class="val" id="me-cost">—</div></div>
+        <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="me-mv">—</div></div>
+        <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="me-unreal">—</div><div style="font-size:10px;margin-top:1px" id="me-unreal-p"></div></div>
+        <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="me-real">—</div></div>
+      </div>
+      <div class="tabs">
+        <button class="tab on" onclick="setTblFilter('me','all',this)">全部</button>
+        <button class="tab" onclick="setTblFilter('me','holding',this)">持有中</button>
+        <button class="tab" onclick="setTblFilter('me','sold',this)">已出清</button>
+        <button class="tab" onclick="setTblFilter('me','tw',this)">台股</button>
+        <button class="tab" onclick="setTblFilter('me','us',this)">美股</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="me-tbody"></tbody></table></div>
+    </div>
   </div>
-  <div class="tbl-wrap"><table><thead><tr><th style="width:24px"></th><th>股票</th><th class="r">現價</th><th class="r">成本</th><th class="r">股數</th><th class="r">市值</th><th class="r">損益</th><th class="r">損益%</th></tr></thead><tbody id="me-tbody"></tbody></table></div>
 </div>
 
 <div class="footer">報價僅供參考・不構成投資建議</div>
@@ -164,9 +243,10 @@ tr.dr td{background:var(--bg2);font-size:11px;color:var(--text2);padding:5px 10p
 <script>
 const SB='https://nqauumyfpdqkkqfjxury.supabase.co';
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xYXV1bXlmcGRxa2txZmp4dXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mjk4MDYsImV4cCI6MjA5NTEwNTgwNn0.j-Ql0_eDLiCLRDyEzbzjVtq4mw7ORdk9eLniDR7zyow';
-let stocks=[],prices={},rate=32.5;
+let stocks=[],prices={},rate=32.5,chart=null;
 const tblFilters={'dad-old':'all','dad-mine':'all','mom':'all','me':'all'};
 const expanded={};
+const blockState={'dad':true,'mom':true,'me':true};
 
 function g(id){return document.getElementById(id)}
 function fmt(n,dec=0){return n==null?'—':Number(n).toLocaleString('zh-TW',{minimumFractionDigits:dec,maximumFractionDigits:dec})}
@@ -174,10 +254,15 @@ function pnlCls(v){return v>0?'pos':v<0?'neg':'neu'}
 function sign(v){return v>=0?'+':''}
 function setStatus(txt,err){g('stxt').textContent=txt;g('sdot').className='status-dot'+(err?' err':'')}
 
-async function loadStocks(){
-  const r=await fetch(SB+'/rest/v1/stocks?select=*&order=created_at.asc',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
-  stocks=await r.json();
+async function sbFetch(path){
+  const r=await fetch(SB+'/rest/v1/'+path,{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
+  return r.json();
 }
+async function sbPost(path,body){
+  await fetch(SB+'/rest/v1/'+path,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
+}
+
+async function loadStocks(){stocks=await sbFetch('stocks?select=*&order=created_at.asc')}
 function getSymbol(s){if(s.yahoo_symbol)return s.yahoo_symbol;if(s.market==='us')return s.ticker;return s.ticker+'.TW'}
 function getPrice(s){return prices[getSymbol(s)]??null}
 function getMV(s){if(s.status==='sold')return null;const p=getPrice(s);if(p==null)return null;return p*(s.market==='us'?rate:1)*s.shares}
@@ -188,35 +273,146 @@ async function fetchPrice(sym){
   try{const r=await fetch(SB+'/functions/v1/hyper-api?symbol='+encodeURIComponent(sym));const d=await r.json();if(d.price!=null)return d.price;}catch(e){}
   return null;
 }
-
 async function fetchAllPrices(){
   const holding=stocks.filter(s=>s.status!=='sold');
-  if(!holding.length)return;
+  if(!holding.length)return{ok:0,fail:0};
   const syms=[...new Set(holding.map(getSymbol))];
   let ok=0,fail=0;
   await Promise.all(syms.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else fail++;}));
   return{ok,fail};
 }
-
 async function fetchRate(){
-  try{
-    const r=await fetch(SB+'/functions/v1/hyper-api?symbol=TWD%3DX');
-    const d=await r.json();
-    if(d.price){rate=d.price;g('rate-display').textContent=rate.toFixed(2);const now=new Date();g('rate-time').textContent='更新於 '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');}
-  }catch(e){}
+  try{const r=await fetch(SB+'/functions/v1/hyper-api?symbol=TWD%3DX');const d=await r.json();if(d.price){rate=d.price;g('rate-display').textContent=rate.toFixed(2);const now=new Date();g('rate-time').textContent='更新於 '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');}}catch(e){}
 }
 
-async function init(){
-  const ic=g('ricon');ic.textContent='⟳';ic.className='spin';
-  setStatus('更新中...',false);
-  await fetchRate();
-  const result=await fetchAllPrices();
-  ic.className='';ic.textContent='↻';
-  if(result){
-    const now=new Date(),t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-    setStatus(result.fail===0?'已更新 '+t:result.ok+'成功/'+result.fail+'失敗',result.fail>0);
-  }else setStatus('尚無持股',false);
-  renderAll();
+// Collapse/expand
+function toggleBlock(who){
+  blockState[who]=!blockState[who];
+  const body=g('body-'+who);
+  const icon=g('icon-'+who);
+  if(blockState[who]){body.style.display='';icon.classList.add('open');}
+  else{body.style.display='none';icon.classList.remove('open');}
+}
+
+// Save snapshot
+async function saveSnapshot(totV,dadV,momV,meV){
+  try{await sbPost('portfolio_snapshots',{total_twd:Math.round(totV),dad_twd:Math.round(dadV),mom_twd:Math.round(momV),me_twd:Math.round(meV)});}
+  catch(e){console.log('Snapshot save failed:',e);}
+}
+
+// Load and render chart
+async function loadChart(){
+  try{
+    const data=await sbFetch('portfolio_snapshots?select=created_at,total_twd,dad_twd,mom_twd,me_twd&order=created_at.asc&limit=90');
+    if(!data||data.length<2){g('chart-note').textContent='資料累積中，更新幾次後顯示';return;}
+    const labels=data.map(d=>{const dt=new Date(d.created_at);return (dt.getMonth()+1)+'/'+(dt.getDate());});
+    const isDark=window.matchMedia('(prefers-color-scheme:dark)').matches;
+    const gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)';
+    const textColor=isDark?'#9e9e99':'#6b6b66';
+    if(chart)chart.destroy();
+    chart=new Chart(g('assetChart'),{
+      type:'line',
+      data:{
+        labels,
+        datasets:[
+          {label:'家族總資產',data:data.map(d=>d.total_twd),borderColor:'#1a1a18',backgroundColor:'rgba(26,26,24,.05)',borderWidth:2,pointRadius:2,tension:.3,fill:false},
+          {label:'爸爸',data:data.map(d=>d.dad_twd),borderColor:'#0C447C',backgroundColor:'transparent',borderWidth:1.5,pointRadius:1,tension:.3},
+          {label:'媽媽',data:data.map(d=>d.mom_twd),borderColor:'#085041',backgroundColor:'transparent',borderWidth:1.5,pointRadius:1,tension:.3},
+          {label:'我',data:data.map(d=>d.me_twd),borderColor:'#633806',backgroundColor:'transparent',borderWidth:1.5,pointRadius:1,tension:.3},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{position:'bottom',labels:{font:{size:11},color:textColor,boxWidth:12,padding:12}},
+          tooltip:{callbacks:{label:ctx=>' $'+fmt(ctx.raw)}}
+        },
+        scales:{
+          x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:10},maxTicksLimit:10}},
+          y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:10},callback:v=>'$'+fmt(v/10000)+'萬'}}
+        }
+      }
+    });
+  }catch(e){console.log('Chart error:',e);}
+}
+
+function calcStats(list){
+  let mv=0,cost=0,real=0;
+  list.forEach(s=>{const m=getMV(s);const c=getCostTWD(s);const r=getRealized(s);real+=r;if(m!=null){mv+=m;cost+=c;}});
+  return{mv,cost,real,unreal:mv-cost,pct:cost>0?(mv-cost)/cost*100:0};
+}
+
+function pnlStr(v){return (v>=0?'+':'')+' $'+fmt(Math.abs(v))}
+function setPnl(id,v){const e=g(id);if(!e)return;e.textContent=pnlStr(v);e.className=e.className.replace(/pos|neg|neu/g,'')+' '+pnlCls(v);}
+
+function renderSummary(){
+  const allStats=calcStats(stocks);
+  g('g-total').textContent='$'+fmt(allStats.mv);
+  setPnl('g-unreal',allStats.unreal);
+  const pu=g('g-unreal-p');pu.textContent=(allStats.unreal>=0?'+':'')+allStats.pct.toFixed(1)+'%';pu.className='sub '+pnlCls(allStats.unreal);
+  setPnl('g-real',allStats.real);
+  const twMV=stocks.filter(s=>s.market==='tw'&&s.status!=='sold').reduce((a,s)=>{const m=getMV(s);return a+(m||0);},0);
+  const usMV=stocks.filter(s=>s.market==='us'&&s.status!=='sold').reduce((a,s)=>{const m=getMV(s);return a+(m||0);},0);
+  g('g-tw').textContent='$'+fmt(twMV);
+  g('g-us').textContent='US$'+fmt(usMV/rate,0);
+
+  // Person summaries in headers
+  const dadAll=stocks.filter(s=>s.owner==='dad');
+  const momAll=stocks.filter(s=>s.owner==='mom');
+  const meAll=stocks.filter(s=>s.owner==='me');
+  const dadS=calcStats(dadAll),momS=calcStats(momAll),meS=calcStats(meAll);
+
+  g('dad-summary-mv').textContent='$'+fmt(dadS.mv);
+  const dsu=g('dad-summary-unreal');dsu.textContent=pnlStr(dadS.unreal);dsu.className='ps-val '+pnlCls(dadS.unreal);
+  const dsr=g('dad-summary-real');dsr.textContent=pnlStr(dadS.real);dsr.className='ps-val '+pnlCls(dadS.real);
+
+  g('mom-summary-mv').textContent='$'+fmt(momS.mv);
+  const msu=g('mom-summary-unreal');msu.textContent=pnlStr(momS.unreal);msu.className='ps-val '+pnlCls(momS.unreal);
+  const msr=g('mom-summary-real');msr.textContent=pnlStr(momS.real);msr.className='ps-val '+pnlCls(momS.real);
+
+  g('me-summary-mv').textContent='$'+fmt(meS.mv);
+  const mesu=g('me-summary-unreal');mesu.textContent=pnlStr(meS.unreal);mesu.className='ps-val '+pnlCls(meS.unreal);
+  const mesr=g('me-summary-real');mesr.textContent=pnlStr(meS.real);mesr.className='ps-val '+pnlCls(meS.real);
+
+  // Dad blocks
+  const dadOld=dadAll.filter(s=>s.op_type==='old'||s.op_type==='none');
+  const dadMine=dadAll.filter(s=>s.op_type==='mine');
+  const d1=calcStats(dadOld);
+  g('dad1-mv').textContent='$'+fmt(d1.mv);setPnl('dad1-unreal',d1.unreal);
+  g('dad1-unreal-p').textContent=(d1.unreal>=0?'+':'')+d1.pct.toFixed(1)+'%';
+  setPnl('dad1-real',d1.real);
+
+  const d2h=dadMine.filter(s=>s.status!=='sold');
+  const d2s=dadMine.filter(s=>s.status==='sold');
+  let d2MV=0,d2C=0,d2Real=0;
+  d2h.forEach(s=>{const m=getMV(s);const c=getCostTWD(s);if(m!=null){d2MV+=m;d2C+=c;}});
+  d2s.forEach(s=>{d2Real+=getRealized(s);});
+  const d2Unreal=d2MV-d2C,d2Total=d2Unreal+d2Real;
+  const d2TotalC=dadMine.reduce((a,s)=>a+getCostTWD(s),0);
+  g('dad2-cost').textContent='$'+fmt(d2C);
+  g('dad2-mv').textContent='$'+fmt(d2MV);
+  setPnl('dad2-unreal',d2Unreal);
+  g('dad2-unreal-p').textContent=(d2Unreal>=0?'+':'')+(d2C>0?(d2Unreal/d2C*100).toFixed(1):0)+'%';
+  setPnl('dad2-real',d2Real);
+  setPnl('dad2-total',d2Total);
+  g('dad2-total-p').textContent=(d2Total>=0?'+':'')+(d2TotalC>0?(d2Total/d2TotalC*100).toFixed(1):0)+'%';
+
+  // Mom
+  g('mom-cost').textContent='$'+fmt(momS.cost);
+  g('mom-mv').textContent='$'+fmt(momS.mv);
+  setPnl('mom-unreal',momS.unreal);
+  g('mom-unreal-p').textContent=(momS.unreal>=0?'+':'')+momS.pct.toFixed(1)+'%';
+  setPnl('mom-real',momS.real);
+
+  // Me
+  g('me-cost').textContent='$'+fmt(meS.cost);
+  g('me-mv').textContent='$'+fmt(meS.mv);
+  setPnl('me-unreal',meS.unreal);
+  g('me-unreal-p').textContent=(meS.unreal>=0?'+':'')+meS.pct.toFixed(1)+'%';
+  setPnl('me-real',meS.real);
+
+  return {total:allStats.mv,dad:dadS.mv,mom:momS.mv,me:meS.mv};
 }
 
 function groupStocks(list){
@@ -224,12 +420,8 @@ function groupStocks(list){
   list.forEach(s=>{
     const key=s.ticker+'|'+s.owner+'|'+s.status;
     if(!map[key])map[key]={ticker:s.ticker,name:s.name||'',market:s.market,owner:s.owner,status:s.status,op_type:s.op_type||'none',yahoo_symbol:s.yahoo_symbol||null,batches:[],totalShares:0,totalCostTWD:0,totalRealized:0};
-    const g=map[key];
-    g.batches.push(s);g.totalShares+=Number(s.shares)||0;g.totalCostTWD+=getCostTWD(s);g.totalRealized+=getRealized(s);
-    if(s.name&&!g.name)g.name=s.name;
-    if(s.op_type==='mine')g.op_type='mine';
-    if(s.op_type==='old'&&g.op_type==='none')g.op_type='old';
-    if(s.yahoo_symbol&&!g.yahoo_symbol)g.yahoo_symbol=s.yahoo_symbol;
+    const g=map[key];g.batches.push(s);g.totalShares+=Number(s.shares)||0;g.totalCostTWD+=getCostTWD(s);g.totalRealized+=getRealized(s);
+    if(s.name&&!g.name)g.name=s.name;if(s.yahoo_symbol&&!g.yahoo_symbol)g.yahoo_symbol=s.yahoo_symbol;
   });
   return Object.values(map);
 }
@@ -245,7 +437,7 @@ function filterList(list,filter){
 function renderTbl(tbodyId,list,tableKey){
   const tbody=g(tbodyId);
   const filtered=filterList(list,tblFilters[tableKey]);
-  if(!filtered.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:1.5rem">尚無資料</td></tr>';return;}
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="8" class="no-data">尚無資料</td></tr>';return;}
   const groups=groupStocks(filtered);
   let html='';
   groups.forEach(grp=>{
@@ -264,7 +456,7 @@ function renderTbl(tbodyId,list,tableKey){
     const isOpen=expanded[gkey];
     html+=`<tr class="gr" onclick="toggleGrp('${gkey}')">
       <td><button class="exp ${multi?(isOpen?'open':''):''}" style="${multi?'':'visibility:hidden'}">${multi?'▶':''}</button></td>
-      <td><b>${grp.ticker}</b><span class="badge ${isUS?'b-us':'b-tw'}">${isUS?'US':'TW'}</span>${isSold?'<span class="badge b-sold">出清</span>':''}<div style="font-size:11px;color:var(--text2)">${grp.name}</div></td>
+      <td><b>${grp.ticker}</b><span class="badge ${isUS?'b-us':'b-tw'}">${isUS?'US':'TW'}</span>${isSold?'<span class="badge b-sold">出清</span>':''}<div style="font-size:10px;color:var(--text2)">${grp.name}</div></td>
       <td class="r">${priceDisp}</td>
       <td class="r" style="color:var(--text2)">${avgCostDisp}</td>
       <td class="r">${fmt(grp.totalShares)}</td>
@@ -287,7 +479,7 @@ function renderTbl(tbodyId,list,tableKey){
   tbody.innerHTML=html;
 }
 
-function toggleGrp(key){expanded[key]=!expanded[key];renderAll()}
+function toggleGrp(key){expanded[key]=!expanded[key];renderAll();}
 
 function setTblFilter(tableKey,filter,btn){
   tblFilters[tableKey]=filter;
@@ -296,81 +488,27 @@ function setTblFilter(tableKey,filter,btn){
   renderAll();
 }
 
-function calcStats(list){
-  let mv=0,cost=0,real=0,hasMV=false;
-  list.forEach(s=>{
-    const m=getMV(s);const c=getCostTWD(s);const r=getRealized(s);
-    real+=r;
-    if(m!=null){mv+=m;cost+=c;hasMV=true;}
-  });
-  return{mv,cost,real,unreal:mv-cost,pct:cost>0?(mv-cost)/cost*100:0};
-}
-
-function setMetric(id,val,extra){
-  const e=g(id);if(!e)return;
-  e.textContent=val;
-  if(extra!==undefined)e.className='val '+extra;
-}
-
 function renderAll(){
-  // Global
-  const allStats=calcStats(stocks);
-  g('g-total').textContent='$'+fmt(allStats.mv);
-  const gue=g('g-unreal');gue.textContent=(allStats.unreal>=0?'+':'')+' $'+fmt(Math.abs(allStats.unreal));gue.className='val '+pnlCls(allStats.unreal);
-  const gup=g('g-unreal-p');gup.textContent=(allStats.unreal>=0?'+':'')+allStats.pct.toFixed(1)+'%';gup.className='sub '+pnlCls(allStats.unreal);
-  const gre=g('g-real');gre.textContent=(allStats.real>=0?'+':'-')+' $'+fmt(Math.abs(allStats.real));gre.className='val '+pnlCls(allStats.real);
-  const twMV=stocks.filter(s=>s.market==='tw'&&s.status!=='sold').reduce((a,s)=>{const m=getMV(s);return a+(m||0);},0);
-  const usMV=stocks.filter(s=>s.market==='us'&&s.status!=='sold').reduce((a,s)=>{const m=getMV(s);return a+(m||0);},0);
-  g('g-tw').textContent='$'+fmt(twMV);
-  g('g-us').textContent='US$'+fmt(usMV/rate,0);
+  const mvs=renderSummary();
+  renderTbl('dad1-tbody',stocks.filter(s=>s.owner==='dad'&&(s.op_type==='old'||s.op_type==='none')),'dad-old');
+  renderTbl('dad2-tbody',stocks.filter(s=>s.owner==='dad'&&s.op_type==='mine'),'dad-mine');
+  renderTbl('mom-tbody',stocks.filter(s=>s.owner==='mom'),'mom');
+  renderTbl('me-tbody',stocks.filter(s=>s.owner==='me'),'me');
+  return mvs;
+}
 
-  // Dad old
-  const dadOld=stocks.filter(s=>s.owner==='dad'&&(s.op_type==='old'||s.op_type==='none'));
-  const d1=calcStats(dadOld);
-  g('dad1-mv').textContent='$'+fmt(d1.mv);
-  const d1ue=g('dad1-unreal');d1ue.textContent=(d1.unreal>=0?'+':'')+' $'+fmt(Math.abs(d1.unreal));d1ue.className='val '+pnlCls(d1.unreal);
-  const d1up=g('dad1-unreal-p');d1up.textContent=(d1.unreal>=0?'+':'')+d1.pct.toFixed(1)+'%';d1up.className=pnlCls(d1.unreal);
-  const d1re=g('dad1-real');d1re.textContent=(d1.real>=0?'+':'-')+' $'+fmt(Math.abs(d1.real));d1re.className='val '+pnlCls(d1.real);
-  renderTbl('dad1-tbody',dadOld,'dad-old');
-
-  // Dad mine
-  const dadMine=stocks.filter(s=>s.owner==='dad'&&s.op_type==='mine');
-  const d2holding=dadMine.filter(s=>s.status!=='sold');
-  const d2sold=dadMine.filter(s=>s.status==='sold');
-  let d2MV=0,d2CostHolding=0,d2Real=0;
-  d2holding.forEach(s=>{const m=getMV(s);const c=getCostTWD(s);if(m!=null){d2MV+=m;d2CostHolding+=c;}});
-  d2sold.forEach(s=>{d2Real+=getRealized(s);});
-  const d2Unreal=d2MV-d2CostHolding;
-  const d2Total=d2Unreal+d2Real;
-  const d2TotalPct=d2CostHolding>0?d2Total/d2CostHolding*100:0;
-  g('dad2-cost').textContent='$'+fmt(d2CostHolding);
-  g('dad2-mv').textContent='$'+fmt(d2MV);
-  const d2ue=g('dad2-unreal');d2ue.textContent=(d2Unreal>=0?'+':'')+' $'+fmt(Math.abs(d2Unreal));d2ue.className='val '+pnlCls(d2Unreal);
-  const d2up=g('dad2-unreal-p');d2up.textContent=(d2Unreal>=0?'+':'')+( d2CostHolding>0?(d2Unreal/d2CostHolding*100).toFixed(1):0)+'%';d2up.className=pnlCls(d2Unreal);
-  const d2re=g('dad2-real');d2re.textContent=(d2Real>=0?'+':'-')+' $'+fmt(Math.abs(d2Real));d2re.className='val '+pnlCls(d2Real);
-  const d2te=g('dad2-total');d2te.textContent=(d2Total>=0?'+':'')+' $'+fmt(Math.abs(d2Total));d2te.className='val '+pnlCls(d2Total);
-  const d2tp=g('dad2-total-p');d2tp.textContent=(d2Total>=0?'+':'')+d2TotalPct.toFixed(1)+'%';d2tp.className=pnlCls(d2Total);
-  renderTbl('dad2-tbody',dadMine,'dad-mine');
-
-  // Mom
-  const momStocks=stocks.filter(s=>s.owner==='mom');
-  const mStats=calcStats(momStocks);
-  g('mom-cost').textContent='$'+fmt(mStats.cost);
-  g('mom-mv').textContent='$'+fmt(mStats.mv);
-  const mue=g('mom-unreal');mue.textContent=(mStats.unreal>=0?'+':'')+' $'+fmt(Math.abs(mStats.unreal));mue.className='val '+pnlCls(mStats.unreal);
-  const mup=g('mom-unreal-p');mup.textContent=(mStats.unreal>=0?'+':'')+mStats.pct.toFixed(1)+'%';mup.className=pnlCls(mStats.unreal);
-  const mre=g('mom-real');mre.textContent=(mStats.real>=0?'+':'-')+' $'+fmt(Math.abs(mStats.real));mre.className='val '+pnlCls(mStats.real);
-  renderTbl('mom-tbody',momStocks,'mom');
-
-  // Me
-  const meStocks=stocks.filter(s=>s.owner==='me');
-  const meStats=calcStats(meStocks);
-  g('me-cost').textContent='$'+fmt(meStats.cost);
-  g('me-mv').textContent='$'+fmt(meStats.mv);
-  const meue=g('me-unreal');meue.textContent=(meStats.unreal>=0?'+':'')+' $'+fmt(Math.abs(meStats.unreal));meue.className='val '+pnlCls(meStats.unreal);
-  const meup=g('me-unreal-p');meup.textContent=(meStats.unreal>=0?'+':'')+meStats.pct.toFixed(1)+'%';meup.className=pnlCls(meStats.unreal);
-  const mere=g('me-real');mere.textContent=(meStats.real>=0?'+':'-')+' $'+fmt(Math.abs(meStats.real));mere.className='val '+pnlCls(meStats.real);
-  renderTbl('me-tbody',meStocks,'me');
+async function init(){
+  const ic=g('ricon');ic.textContent='⟳';ic.className='spin';
+  setStatus('更新中...',false);
+  await fetchRate();
+  const result=await fetchAllPrices();
+  ic.className='';ic.textContent='↻';
+  const now=new Date(),t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  setStatus(result.fail===0?'已更新 '+t:result.ok+'成功/'+result.fail+'失敗',result.fail>0);
+  const mvs=renderAll();
+  // Save snapshot after successful price update
+  if(mvs&&mvs.total>0){await saveSnapshot(mvs.total,mvs.dad,mvs.mom,mvs.me);}
+  await loadChart();
 }
 
 (async()=>{
@@ -378,6 +516,7 @@ function renderAll(){
   try{
     await loadStocks();
     renderAll();
+    await loadChart();
     if(stocks.filter(s=>s.status!=='sold').length)await init();
     else setStatus('尚無持股',false);
   }catch(e){setStatus('載入失敗',true);console.error(e);}
