@@ -176,7 +176,7 @@ AAPL,蘋果,us,10,185,me,none,holding,,,,
     <h2>新增持股</h2>
     <div class="field"><label>持有人</label><select id="m-own" onchange="onOwnChange()"><option value="dad">爸爸</option><option value="mom">媽媽</option><option value="me">我</option></select></div>
     <div class="field"><label>市場</label><select id="m-mkt"><option value="tw">台股</option><option value="us">美股</option></select></div>
-    <div class="field"><label>股票代號</label><input type="text" id="m-tkr" placeholder="例：2330 或 NVDA" style="text-transform:uppercase"></div>
+    <div class="field"><label>股票代號</label><input type="text" id="m-tkr" placeholder="例：2330 或 NVDA" style="text-transform:uppercase" onblur="autoFillFromTicker()"></div>
     <div class="field"><label>股票名稱</label><input type="text" id="m-name" placeholder="例：台積電"></div>
     <div class="field"><label>Yahoo 代號（特殊市場才填）</label><input type="text" id="m-yahoo" placeholder="例：5274.TWO"><div class="hint">一般台股不用填，自動加 .TW</div></div>
     <div class="field"><label>股數</label><input type="number" id="m-shr" placeholder="例：1000" min="1"></div>
@@ -471,7 +471,32 @@ function setFilter(f,btn){curFilter=f;document.querySelectorAll('.tabs .tab').fo
 
 // Modal
 function onOwnChange(){const own=g('m-own').value;g('op-field').style.display=own==='dad'?'block':'none'}
-function onStatusChange(){const s=g('m-status').value;g('sell-fields').style.display=s==='sold'?'block':'none'}
+function autoFillFromTicker(){
+  const tkr=g('m-tkr').value.trim().toUpperCase();
+  const own=g('m-own').value;
+  if(!tkr||!stocks.length)return;
+  // Find matching stocks for this owner
+  const matches=stocks.filter(s=>s.ticker===tkr&&s.status!=='sold');
+  const allMatches=stocks.filter(s=>s.ticker===tkr);
+  // Auto-fill name
+  if(allMatches.length>0&&!g('m-name').value){
+    g('m-name').value=allMatches[0].name||'';
+  }
+  // Auto-fill yahoo symbol
+  if(allMatches.length>0&&!g('m-yahoo').value&&allMatches[0].yahoo_symbol){
+    const ys=allMatches[0].yahoo_symbol;
+    if(ys!==tkr+'.TW')g('m-yahoo').value=ys;
+  }
+  // If status is sold, auto-fill cost from weighted average of holding
+  if(g('m-status').value==='sold'&&matches.length>0){
+    const totalShares=matches.reduce((a,s)=>a+Number(s.shares),0);
+    const totalCost=matches.reduce((a,s)=>a+s.cost*(s.market==='us'?1:1)*Number(s.shares),0);
+    const avgCost=totalCost/totalShares;
+    if(!g('m-cost').value)g('m-cost').value=avgCost.toFixed(4);
+  }
+}
+
+function onStatusChange(){const s=g('m-status').value;g('sell-fields').style.display=s==='sold'?'block':'none';if(s==='sold')autoFillFromTicker();}
 function openAddModal(){g('add-modal').classList.add('open');onOwnChange();onStatusChange()}
 function closeAddModal(){g('add-modal').classList.remove('open');g('m-err').style.display='none'}
 
