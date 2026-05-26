@@ -220,18 +220,22 @@ async function sbFetch(method,path,body){
   return method==='DELETE'?null:r.json();
 }
 async function loadStocks(){
-  // Supabase/PostgREST often returns only the first 1000 rows by default.
-  // This paginates so all family portfolio rows are loaded.
   stocks=[];
-  const pageSize=1000;
-  let offset=0;
-  while(true){
-    const rows=await sbFetch('GET',`stocks?select=*&order=created_at.asc&limit=${pageSize}&offset=${offset}`);
-    if(!rows||!rows.length)break;
-    stocks=stocks.concat(rows);
-    if(rows.length<pageSize)break;
-    offset+=pageSize;
-  }
+
+  const page1=await sbFetch(
+    'GET',
+    'stocks?select=*&order=created_at.asc&limit=1000&offset=0'
+  );
+
+  const page2=await sbFetch(
+    'GET',
+    'stocks?select=*&order=created_at.asc&limit=1000&offset=1000'
+  );
+
+  stocks=[
+    ...(page1||[]),
+    ...(page2||[])
+  ];
 }
 
 function getSymbol(s){
