@@ -284,7 +284,8 @@ const expanded={};
 const blockState={'dad':true,'mom':true,'me':true};
 
 function g(id){return document.getElementById(id)}
-function fmt(n,dec=0){return n==null?'—':Number(n).toLocaleString('zh-TW',{minimumFractionDigits:dec,maximumFractionDigits:dec})}
+function fmt(n,dec=2){return n==null?'—':Number(n).toLocaleString('zh-TW',{minimumFractionDigits:dec,maximumFractionDigits:dec})}
+function fmtM(n){return n==null?'—':Number(n).toLocaleString('zh-TW',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function pnlCls(v){return v>0?'pos':v<0?'neg':'neu'}
 function sign(v){return v>=0?'+':''}
 function setStatus(txt,err){g('stxt').textContent=txt;g('sdot').className='status-dot'+(err?' err':'')}
@@ -383,7 +384,7 @@ function setPnl(id,v){const e=g(id);if(!e)return;e.textContent=pnlStr(v);e.class
 
 function renderSummary(){
   const allStats=calcStats(stocks);
-  g('g-total').textContent='$'+fmt(allStats.mv);
+  g('g-total').textContent='$'+fmtM(allStats.mv);
   setPnl('g-unreal',allStats.unreal);
   const pu=g('g-unreal-p');pu.textContent=(allStats.unreal>=0?'+':'')+allStats.pct.toFixed(1)+'%';pu.className='sub '+pnlCls(allStats.unreal);
   setPnl('g-real',allStats.real);
