@@ -180,11 +180,11 @@ AAPL,蘋果,us,10,185,me,none,holding,,,,
     <div class="field"><label>股票名稱</label><input type="text" id="m-name" placeholder="例：台積電"></div>
     <div class="field"><label>Yahoo 代號（特殊市場才填）</label><input type="text" id="m-yahoo" placeholder="例：5274.TWO"><div class="hint">一般台股不用填，自動加 .TW</div></div>
     <div class="field"><label>股數</label><input type="number" id="m-shr" placeholder="例：1000" min="1"></div>
-    <div class="field"><label>買入成本（每股）</label><input type="number" id="m-cost" placeholder="台幣 或 美元" step="0.01" min="0"></div>
+    <div class="field"><label>買入成交價（每股，不含手續費）</label><input type="number" id="m-cost" placeholder="台幣 或 美元" step="0.01" min="0"></div>
     <div class="field"><label>買入日期</label><input type="date" id="m-bdate"></div>
     <div class="field"><label>狀態</label><select id="m-status" onchange="onStatusChange()"><option value="holding">持有中</option><option value="sold">已賣出</option></select></div>
     <div id="sell-fields" style="display:none">
-      <div class="field"><label>賣出價（每股）</label><input type="number" id="m-sprice" step="0.01" min="0"></div>
+      <div class="field"><label>賣出成交價（每股，未扣稅費）</label><input type="number" id="m-sprice" step="0.01" min="0"></div>
       <div class="field"><label>賣出日期</label><input type="date" id="m-sdate"></div>
     </div>
     <div id="op-field" style="display:none">
@@ -215,6 +215,41 @@ function fmtM(n){return n==null?'—':Number(n).toLocaleString('zh-TW',{minimumF
 function fmtMoney(n,isUS){return n==null?'—':(isUS?'US$':'$')+fmt(Math.abs(n))}
 function pnlCls(v){return v>0?'pos':v<0?'neg':'neu'}
 function sign(v){return v>=0?'+':''}
+
+const TW_FEE_RATE = 0.001425 * 0.28; // 手續費：0.1425% × 2.8折
+const TW_MIN_FEE = 20;
+const TW_STOCK_TAX_RATE = 0.003; // 一般股票證交稅 0.3%
+const TW_ETF_TAX_RATE = 0.001;   // ETF證交稅 0.1%
+
+function isETF(ticker){
+  const t=String(ticker||'').padStart(4,'0');
+  return t.startsWith('00');
+}
+function calcTwFee(amount){
+  amount=Number(amount)||0;
+  if(amount<=0)return 0;
+  return Math.max(TW_MIN_FEE, Math.round(amount*TW_FEE_RATE));
+}
+function calcTwTax(amount,ticker){
+  amount=Number(amount)||0;
+  if(amount<=0)return 0;
+  return Math.round(amount*(isETF(ticker)?TW_ETF_TAX_RATE:TW_STOCK_TAX_RATE));
+}
+function calcBuyCostPerShare(ticker,market,price,shares){
+  price=Number(price)||0;shares=Number(shares)||0;
+  if(market!=='tw'||price<=0||shares<=0)return price;
+  const amount=price*shares;
+  const fee=calcTwFee(amount);
+  return (amount+fee)/shares;
+}
+function calcNetSellPricePerShare(ticker,market,price,shares){
+  price=Number(price)||0;shares=Number(shares)||0;
+  if(market!=='tw'||price<=0||shares<=0)return price;
+  const amount=price*shares;
+  const fee=calcTwFee(amount);
+  const tax=calcTwTax(amount,ticker);
+  return (amount-fee-tax)/shares;
+}
 
 async function sbFetch(method,path,body){
   const r=await fetch(SB+'/rest/v1/'+path,{method,headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:method==='POST'||method==='PATCH'?'return=representation':''},body:body?JSON.stringify(body):undefined});
@@ -510,7 +545,7 @@ async function doAdd(){
   const name=g('m-name').value.trim();
   const yahoo=g('m-yahoo').value.trim().toUpperCase()||null;
   const shr=parseFloat(g('m-shr').value);
-  const cost=parseFloat(g('m-cost').value);
+  const rawCost=parseFloat(g('m-cost').value);
   const bdate=g('m-bdate').value||null;
   const status=g('m-status').value;
   const sprice=status==='sold'?parseFloat(g('m-sprice').value):null;
@@ -518,9 +553,11 @@ async function doAdd(){
   const optype=own==='dad'?g('m-optype').value:'none';
   if(!tkr){errEl.textContent='請輸入股票代號';errEl.style.display='block';return}
   if(!shr||shr<=0){errEl.textContent='請輸入正確股數';errEl.style.display='block';return}
-  if(isNaN(cost)||cost<0){errEl.textContent='請輸入成本';errEl.style.display='block';return}
+  if(isNaN(rawCost)||rawCost<0){errEl.textContent='請輸入成本';errEl.style.display='block';return}
   try{
-    await sbFetch('POST','stocks',{ticker:tkr,name:name||null,market:mkt,shares:shr,cost,owner:own,op_type:optype,status,sell_price:sprice||null,sell_date:sdate,buy_date:bdate,yahoo_symbol:yahoo});
+    const cost=calcBuyCostPerShare(tkr,mkt,rawCost,shr);
+    const netSellPrice=status==='sold'&&sprice?calcNetSellPricePerShare(tkr,mkt,sprice,shr):null;
+    await sbFetch('POST','stocks',{ticker:tkr,name:name||null,market:mkt,shares:shr,cost,owner:own,op_type:optype,status,sell_price:netSellPrice,sell_date:sdate,buy_date:bdate,yahoo_symbol:yahoo});
     await loadStocks();closeAddModal();
     ['m-tkr','m-name','m-yahoo','m-shr','m-cost','m-bdate','m-sprice','m-sdate'].forEach(id=>g(id).value='');
     sortKey=null;sortDir=1;document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('asc','desc'));
@@ -656,6 +693,7 @@ async function doSellConfirm() {
   if (sellShares > sellTarget.totalShares) { errEl.textContent = '超過持有股數 '+sellTarget.totalShares+' 股'; errEl.style.display = 'block'; return; }
   if (!sprice || sprice <= 0) { errEl.textContent = '請輸入賣出價'; errEl.style.display = 'block'; return; }
   if (!sdate) { errEl.textContent = '請輸入賣出日期'; errEl.style.display = 'block'; return; }
+  const netSellPrice = calcNetSellPricePerShare(sellTarget.ticker, sellTarget.market, sprice, sellShares);
   try {
     let remaining = sellShares;
     const batches = [...sellTarget.batches].sort((a, b) => {
@@ -666,11 +704,11 @@ async function doSellConfirm() {
       if (remaining <= 0) break;
       const bShares = Number(batch.shares);
       if (remaining >= bShares) {
-        await sbFetch('PATCH', 'stocks?id=eq.'+batch.id, {status:'sold',sell_price:sprice,sell_date:sdate});
+        await sbFetch('PATCH', 'stocks?id=eq.'+batch.id, {status:'sold',sell_price:netSellPrice,sell_date:sdate});
         remaining -= bShares;
       } else {
         await sbFetch('PATCH', 'stocks?id=eq.'+batch.id, {shares: bShares - remaining});
-        await sbFetch('POST', 'stocks', {ticker:batch.ticker,name:batch.name,market:batch.market,shares:remaining,cost:batch.cost,owner:batch.owner,op_type:batch.op_type,status:'sold',sell_price:sprice,sell_date:sdate,buy_date:batch.buy_date,yahoo_symbol:batch.yahoo_symbol});
+        await sbFetch('POST', 'stocks', {ticker:batch.ticker,name:batch.name,market:batch.market,shares:remaining,cost:batch.cost,owner:batch.owner,op_type:batch.op_type,status:'sold',sell_price:netSellPrice,sell_date:sdate,buy_date:batch.buy_date,yahoo_symbol:batch.yahoo_symbol});
         remaining = 0;
       }
     }
@@ -686,7 +724,8 @@ async function doSellConfirm() {
     <h2>賣出持股</h2>
     <div id="sell-modal-info" style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;margin-bottom:1rem;font-size:13px;line-height:1.8"></div>
     <div class="field"><label>賣出股數</label><input type="number" id="sm-shares" step="1" min="1" placeholder="例：1000"></div>
-    <div class="field"><label>賣出價（每股）</label><input type="number" id="sm-sprice" step="0.01" min="0" placeholder="例：320"></div>
+    <div class="field"><label>賣出成交價（每股，未扣稅費）</label><input type="number" id="sm-sprice" step="0.01" min="0" placeholder="例：320"></div>
+    <div class="hint">系統會自動估算手續費與證交稅，並用扣除後淨價計算已實現損益。</div>
     <div class="field"><label>賣出日期</label><input type="date" id="sm-sdate"></div>
     <div class="merr" id="sm-err"></div>
     <div class="mbtns">
