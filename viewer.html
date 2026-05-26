@@ -302,7 +302,20 @@ async function sbPost(path,body){
   await fetch(SB+'/rest/v1/'+path,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
 }
 
-async function loadStocks(){stocks=await sbFetch('stocks?select=*&order=created_at.asc')}
+async function loadStocks(){
+  // Supabase/PostgREST often returns only the first 1000 rows by default.
+  // This paginates so all family portfolio rows are loaded.
+  stocks=[];
+  const pageSize=1000;
+  let offset=0;
+  while(true){
+    const rows=await sbFetch(`stocks?select=*&order=created_at.asc&limit=${pageSize}&offset=${offset}`);
+    if(!rows||!rows.length)break;
+    stocks=stocks.concat(rows);
+    if(rows.length<pageSize)break;
+    offset+=pageSize;
+  }
+}
 function getSymbol(s){if(s.yahoo_symbol)return s.yahoo_symbol;if(s.market==='us')return s.ticker;return s.ticker+'.TW'}
 function getPrice(s){return prices[getSymbol(s)]??null}
 function getMV(s){if(s.status==='sold')return null;const p=getPrice(s);if(p==null)return null;return p*(s.market==='us'?rate:1)*s.shares}
@@ -310,17 +323,70 @@ function getCostTWD(s){return s.cost*(s.market==='us'?rate:1)*s.shares}
 function getRealized(s){if(s.status!=='sold'||s.sell_price==null)return 0;const rt=s.market==='us'?rate:1;const gross=(s.sell_price-s.cost)*rt*s.shares;const amt=s.sell_price*rt*s.shares;return gross-calcFee(amt)-calcTax(amt,s.ticker)}
 
 async function fetchPrice(sym){
-  try{const r=await fetch(SB+'/functions/v1/hyper-api?symbol='+encodeURIComponent(sym));const d=await r.json();if(d.price!=null)return d.price;}catch(e){}
+  async function one(s){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),8000);
+    try{
+      const r=await fetch(SB+'/functions/v1/hyper-api?symbol='+encodeURIComponent(s),{signal:controller.signal});
+      clearTimeout(timer);
+      if(!r.ok)return null;
+      const d=await r.json();
+      return d.price!=null?Number(d.price):null;
+    }catch(e){
+      clearTimeout(timer);
+      return null;
+    }
+  }
+
+  const candidates=[sym];
+  if(sym.endsWith('.TW'))candidates.push(sym.replace(/\.TW$/,'.TWO'));
+  if(sym.endsWith('.TWO'))candidates.push(sym.replace(/\.TWO$/,'.TW'));
+
+  for(const candidate of candidates){
+    for(let attempt=0;attempt<2;attempt++){
+      const p=await one(candidate);
+      if(p!=null){
+        return {price:p,actualSymbol:candidate};
+      }
+      await new Promise(r=>setTimeout(r,250));
+    }
+  }
   return null;
+}
+
+async function fetchPricesLimited(syms,onProgress){
+  let ok=0,fail=0,done=0,failed=[];
+  const queue=[...syms];
+  const worker=async()=>{
+    while(queue.length){
+      const sym=queue.shift();
+      const result=await fetchPrice(sym);
+      if(result!=null){
+        prices[sym]=result.price;
+        prices[result.actualSymbol]=result.price;
+        ok++;
+      }else{
+        fail++;
+        failed.push(sym);
+      }
+      done++;
+      if(onProgress)onProgress(done,syms.length,ok,fail,failed);
+      await new Promise(r=>setTimeout(r,120));
+    }
+  };
+  const workers=Array.from({length:Math.min(6,syms.length)},worker);
+  await Promise.all(workers);
+  return {ok,fail,failed};
 }
 async function fetchAllPrices(){
   const holding=stocks.filter(s=>s.status!=='sold');
-  if(!holding.length)return{ok:0,fail:0};
+  if(!holding.length)return{ok:0,fail:0,failed:[]};
   const syms=[...new Set(holding.map(getSymbol))];
-  let ok=0,fail=0,failed=[];
-  await Promise.all(syms.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else{fail++;failed.push(sym);}}));
-  if(failed.length)console.warn('報價同步失敗',failed);
-  return{ok,fail,failed};
+  const result=await fetchPricesLimited(syms,(done,total,ok,fail)=>{
+    setStatus('更新中 '+done+'/'+total+'｜成功 '+ok+'／失敗 '+fail,fail>0);
+  });
+  if(result.failed.length)console.warn('報價同步失敗',result.failed);
+  return result;
 }
 async function fetchRate(){
   try{const r=await fetch(SB+'/functions/v1/hyper-api?symbol=TWD%3DX');const d=await r.json();if(d.price){rate=d.price;g('rate-display').textContent=rate.toFixed(2);const now=new Date();g('rate-time').textContent='更新於 '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');}}catch(e){}
@@ -379,9 +445,17 @@ async function loadChart(){
 }
 
 function calcStats(list){
-  let mv=0,cost=0,real=0;
-  list.forEach(s=>{const m=getMV(s);const c=getCostTWD(s);const r=getRealized(s);real+=r;if(m!=null){mv+=m;cost+=c;}});
-  return{mv,cost,real,unreal:mv-cost,pct:cost>0?(mv-cost)/cost*100:0};
+  let mv=0,cost=0,real=0,missing=0;
+  list.forEach(s=>{
+    const m=getMV(s);
+    const c=getCostTWD(s);
+    const r=getRealized(s);
+    real+=r;
+    if(s.status!=='sold') cost+=c;
+    if(m!=null) mv+=m;
+    else if(s.status!=='sold') missing++;
+  });
+  return{mv,cost,real,missing,unreal:mv-cost,pct:cost>0?(mv-cost)/cost*100:0};
 }
 
 function pnlStr(v){return (v>=0?'+':'')+' $'+fmt(Math.abs(v))}

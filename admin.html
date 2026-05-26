@@ -219,7 +219,20 @@ async function sbFetch(method,path,body){
   if(!r.ok)throw new Error(await r.text());
   return method==='DELETE'?null:r.json();
 }
-async function loadStocks(){stocks=await sbFetch('GET','stocks?select=*&order=created_at.asc')}
+async function loadStocks(){
+  // Supabase/PostgREST often returns only the first 1000 rows by default.
+  // This paginates so all family portfolio rows are loaded.
+  stocks=[];
+  const pageSize=1000;
+  let offset=0;
+  while(true){
+    const rows=await sbFetch('GET',`stocks?select=*&order=created_at.asc&limit=${pageSize}&offset=${offset}`);
+    if(!rows||!rows.length)break;
+    stocks=stocks.concat(rows);
+    if(rows.length<pageSize)break;
+    offset+=pageSize;
+  }
+}
 
 function getSymbol(s){
   if(s.yahoo_symbol)return s.yahoo_symbol;
@@ -228,13 +241,60 @@ function getSymbol(s){
 }
 
 async function fetchPrice(sym){
-  try{
-    const url='https://nqauumyfpdqkkqfjxury.supabase.co/functions/v1/hyper-api?symbol='+encodeURIComponent(sym);
-    const r=await fetch(url);
-    const d=await r.json();
-    if(d.price!=null)return d.price;
-  }catch(e){}
+  async function one(s){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),8000);
+    try{
+      const r=await fetch(SB+'/functions/v1/hyper-api?symbol='+encodeURIComponent(s),{signal:controller.signal});
+      clearTimeout(timer);
+      if(!r.ok)return null;
+      const d=await r.json();
+      return d.price!=null?Number(d.price):null;
+    }catch(e){
+      clearTimeout(timer);
+      return null;
+    }
+  }
+
+  const candidates=[sym];
+  if(sym.endsWith('.TW'))candidates.push(sym.replace(/\.TW$/,'.TWO'));
+  if(sym.endsWith('.TWO'))candidates.push(sym.replace(/\.TWO$/,'.TW'));
+
+  for(const candidate of candidates){
+    for(let attempt=0;attempt<2;attempt++){
+      const p=await one(candidate);
+      if(p!=null){
+        return {price:p,actualSymbol:candidate};
+      }
+      await new Promise(r=>setTimeout(r,250));
+    }
+  }
   return null;
+}
+
+async function fetchPricesLimited(syms,onProgress){
+  let ok=0,fail=0,done=0,failed=[];
+  const queue=[...syms];
+  const worker=async()=>{
+    while(queue.length){
+      const sym=queue.shift();
+      const result=await fetchPrice(sym);
+      if(result!=null){
+        prices[sym]=result.price;
+        prices[result.actualSymbol]=result.price;
+        ok++;
+      }else{
+        fail++;
+        failed.push(sym);
+      }
+      done++;
+      if(onProgress)onProgress(done,syms.length,ok,fail,failed);
+      await new Promise(r=>setTimeout(r,120));
+    }
+  };
+  const workers=Array.from({length:Math.min(6,syms.length)},worker);
+  await Promise.all(workers);
+  return {ok,fail,failed};
 }
 
 async function fetchRate(){
@@ -252,15 +312,16 @@ async function refreshAll(){
   const holding=stocks.filter(s=>s.status!=='sold');
   if(!holding.length){renderAll();return;}
   const ic=g('ricon');ic.textContent='⟳';ic.className='spin';
-  setStatus('更新中...',false);
   const syms=[...new Set(holding.map(getSymbol))];
-  let ok=0,fail=0,failed=[];
-  await Promise.all(syms.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else{fail++;failed.push(sym);}}));
+  setStatus('更新中 0/'+syms.length,false);
+  const result=await fetchPricesLimited(syms,(done,total,ok,fail,failed)=>{
+    setStatus('更新中 '+done+'/'+total+'｜成功 '+ok+'／失敗 '+fail,fail>0);
+  });
   ic.className='';ic.textContent='↻';
   const now=new Date(),t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  if(fail===0) setStatus('已更新 '+t,false);
-  else setStatus(ok+'成功/'+fail+'失敗：'+failed.slice(0,5).join('、')+(failed.length>5?'…':''),true);
-  if(failed.length) console.warn('報價同步失敗',failed);
+  if(result.fail===0) setStatus('已更新 '+t,false);
+  else setStatus(result.ok+'成功/'+result.fail+'失敗：'+result.failed.slice(0,10).join('、')+(result.failed.length>10?'…':''),true);
+  if(result.failed.length) console.warn('報價同步失敗',result.failed);
   renderAll();
 }
 
@@ -315,11 +376,13 @@ function groupStocks(list){
 }
 
 function renderSummary(){
-  let totV=0,totC=0,totR=0,twV=0,usV=0,twTickers=new Set(),usTickers=new Set();
+  let totV=0,totC=0,totR=0,twV=0,usV=0,twTickers=new Set(),usTickers=new Set(),missing=0;
   stocks.forEach(s=>{
     const mv=getMV(s);const c=getCostTWD(s);const r=getRealized(s);
     totR+=r;
-    if(mv!=null){totV+=mv;totC+=c;}
+    if(s.status!=='sold') totC+=c;
+    if(mv!=null) totV+=mv;
+    else if(s.status!=='sold') missing++;
     if(s.status!=='sold'){
       if(s.market==='tw'){twV+=mv||0;twTickers.add(s.ticker);}
       else{usV+=mv||0;usTickers.add(s.ticker);}
