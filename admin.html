@@ -220,24 +220,26 @@ async function sbFetch(method,path,body){
   return method==='DELETE'?null:r.json();
 }
 async function loadStocks(){
-  stocks=[];
+  stocks = [];
 
-  const page1=await sbFetch(
+  var page1 = await sbFetch(
     'GET',
     'stocks?select=*&order=created_at.asc&limit=1000&offset=0'
   );
 
-  const page2=await sbFetch(
+  var page2 = await sbFetch(
     'GET',
     'stocks?select=*&order=created_at.asc&limit=1000&offset=1000'
   );
 
-  stocks=[
-    ...(page1||[]),
-    ...(page2||[])
-  ];
-}
+  if (page1 && page1.length) {
+    stocks = stocks.concat(page1);
+  }
 
+  if (page2 && page2.length) {
+    stocks = stocks.concat(page2);
+  }
+}
 function getSymbol(s){
   if(s.yahoo_symbol)return s.yahoo_symbol;
   if(s.market==='us')return s.ticker;
