@@ -161,13 +161,13 @@ tr.dr td{background:var(--bg2);font-size:11px;color:var(--text2);padding:5px 10p
         </tr></thead><tbody id="dad1-tbody"></tbody></table></div>
     </div>
     <div class="block">
-      <div class="block-head"><h2>區塊二：操盤部位</h2><span class="tag tag-mine">操盤</span></div>
+      <div class="block-head"><h2>區塊二：其他持股</h2><span class="tag tag-mine">一般</span></div>
       <div class="metrics-row">
         <div class="metric"><div class="lbl">投入成本</div><div class="val" id="dad2-cost">—</div></div>
         <div class="metric"><div class="lbl">持倉市值</div><div class="val" id="dad2-mv">—</div></div>
         <div class="metric"><div class="lbl">未實現損益</div><div class="val" id="dad2-unreal">—</div><div style="font-size:10px;margin-top:1px" id="dad2-unreal-p"></div></div>
         <div class="metric"><div class="lbl">已實現損益</div><div class="val" id="dad2-real">—</div></div>
-        <div class="metric"><div class="lbl">操盤總損益</div><div class="val" id="dad2-total">—</div><div style="font-size:10px;margin-top:1px" id="dad2-total-p"></div></div>
+        <div class="metric"><div class="lbl">其他持股總損益</div><div class="val" id="dad2-total">—</div><div style="font-size:10px;margin-top:1px" id="dad2-total-p"></div></div>
       </div>
       <div class="tabs">
         <button class="tab on" onclick="setTblFilter('dad-mine','all',this)">全部</button>
@@ -288,6 +288,10 @@ function fmt(n,dec=2){return n==null?'—':Number(n).toLocaleString('zh-TW',{min
 function fmtM(n){return n==null?'—':Number(n).toLocaleString('zh-TW',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function pnlCls(v){return v>0?'pos':v<0?'neg':'neu'}
 function sign(v){return v>=0?'+':''}
+function isDadOld(s){return s.owner==='dad' && Number(s.cost)===0}
+function isETF(ticker){return /^(00|008|009)/.test(String(ticker||''))}
+function calcFee(amount){return amount>0?Math.max(Math.round(amount*0.001425),20):0}
+function calcTax(amount,ticker){return amount>0?Math.round(amount*(isETF(ticker)?0.001:0.003)):0}
 function setStatus(txt,err){g('stxt').textContent=txt;g('sdot').className='status-dot'+(err?' err':'')}
 
 async function sbFetch(path){
@@ -303,7 +307,7 @@ function getSymbol(s){if(s.yahoo_symbol)return s.yahoo_symbol;if(s.market==='us'
 function getPrice(s){return prices[getSymbol(s)]??null}
 function getMV(s){if(s.status==='sold')return null;const p=getPrice(s);if(p==null)return null;return p*(s.market==='us'?rate:1)*s.shares}
 function getCostTWD(s){return s.cost*(s.market==='us'?rate:1)*s.shares}
-function getRealized(s){if(s.status!=='sold'||s.sell_price==null)return 0;return(s.sell_price-s.cost)*(s.market==='us'?rate:1)*s.shares}
+function getRealized(s){if(s.status!=='sold'||s.sell_price==null)return 0;const rt=s.market==='us'?rate:1;const gross=(s.sell_price-s.cost)*rt*s.shares;const amt=s.sell_price*rt*s.shares;return gross-calcFee(amt)-calcTax(amt,s.ticker)}
 
 async function fetchPrice(sym){
   try{const r=await fetch(SB+'/functions/v1/hyper-api?symbol='+encodeURIComponent(sym));const d=await r.json();if(d.price!=null)return d.price;}catch(e){}
@@ -313,9 +317,10 @@ async function fetchAllPrices(){
   const holding=stocks.filter(s=>s.status!=='sold');
   if(!holding.length)return{ok:0,fail:0};
   const syms=[...new Set(holding.map(getSymbol))];
-  let ok=0,fail=0;
-  await Promise.all(syms.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else fail++;}));
-  return{ok,fail};
+  let ok=0,fail=0,failed=[];
+  await Promise.all(syms.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else{fail++;failed.push(sym);}}));
+  if(failed.length)console.warn('報價同步失敗',failed);
+  return{ok,fail,failed};
 }
 async function fetchRate(){
   try{const r=await fetch(SB+'/functions/v1/hyper-api?symbol=TWD%3DX');const d=await r.json();if(d.price){rate=d.price;g('rate-display').textContent=rate.toFixed(2);const now=new Date();g('rate-time').textContent='更新於 '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');}}catch(e){}
@@ -412,8 +417,8 @@ function renderSummary(){
   const mesr=g('me-summary-real');mesr.textContent=pnlStr(meS.real);mesr.className='ps-val '+pnlCls(meS.real);
 
   // Dad blocks
-  const dadOld=dadAll.filter(s=>s.op_type==='old'||s.op_type==='none');
-  const dadMine=dadAll.filter(s=>s.op_type==='mine');
+  const dadOld=dadAll.filter(s=>isDadOld(s));
+  const dadMine=dadAll.filter(s=>!isDadOld(s));
   const d1=calcStats(dadOld);
   g('dad1-mv').textContent='$'+fmt(d1.mv);setPnl('dad1-unreal',d1.unreal);
   g('dad1-unreal-p').textContent=(d1.unreal>=0?'+':'')+d1.pct.toFixed(1)+'%';
@@ -455,7 +460,7 @@ function groupStocks(list){
   const map={};
   list.forEach(s=>{
     const key=s.ticker+'|'+s.owner+'|'+s.status;
-    if(!map[key])map[key]={ticker:s.ticker,name:s.name||'',market:s.market,owner:s.owner,status:s.status,op_type:s.op_type||'none',yahoo_symbol:s.yahoo_symbol||null,batches:[],totalShares:0,totalCostTWD:0,totalRealized:0};
+    if(!map[key])map[key]={ticker:s.ticker,name:s.name||'',market:s.market,owner:s.owner,status:s.status,op_type:isDadOld(s)?'old':'none',yahoo_symbol:s.yahoo_symbol||null,batches:[],totalShares:0,totalCostTWD:0,totalRealized:0};
     const g=map[key];g.batches.push(s);g.totalShares+=Number(s.shares)||0;g.totalCostTWD+=getCostTWD(s);g.totalRealized+=getRealized(s);
     if(s.name&&!g.name)g.name=s.name;if(s.yahoo_symbol&&!g.yahoo_symbol)g.yahoo_symbol=s.yahoo_symbol;
   });
@@ -495,7 +500,7 @@ function renderTbl(tbodyId,list,tableKey){
       <td><b>${grp.ticker}</b><span class="badge ${isUS?'b-us':'b-tw'}">${isUS?'US':'TW'}</span>${isSold?'<span class="badge b-sold">出清</span>':''}<div style="font-size:10px;color:var(--text2)">${grp.name}</div></td>
       <td class="r">${priceDisp}</td>
       <td class="r" style="color:var(--text2)">${avgCostDisp}</td>
-      <td class="r">${fmt(grp.totalShares)}</td>
+      <td class="r">${fmt(grp.totalShares,0)}</td>
       <td class="r">${mv!=null?'$'+fmt(mv):'—'}</td>
       <td class="r ${cls}">${pnl!=null?sg+'$'+fmt(Math.abs(pnl)):'—'}</td>
       <td class="r ${cls}">${pct!=null?sg+pct.toFixed(1)+'%':'—'}</td>
@@ -508,7 +513,7 @@ function renderTbl(tbodyId,list,tableKey){
         const bPct=bPnl!=null&&bC>0?bPnl/bC*100:null;
         const bsg=sign(bPnl||0),bcls=bPnl!=null?pnlCls(bPnl):'neu';
         const dateLabel=s.buy_date?s.buy_date:('批次 '+(bi+1));
-        html+=`<tr class="dr"><td></td><td style="padding-left:16px">📅 ${dateLabel}</td><td class="r">${priceDisp}</td><td class="r">${isUS?'US$'+fmt(s.cost,2):'$'+fmt(s.cost)}</td><td class="r">${fmt(s.shares)}</td><td class="r">${bMV!=null?'$'+fmt(bMV):'—'}</td><td class="r ${bcls}">${bPnl!=null?bsg+'$'+fmt(Math.abs(bPnl)):'—'}</td><td class="r ${bcls}">${bPct!=null?bsg+bPct.toFixed(1)+'%':'—'}</td></tr>`;
+        html+=`<tr class="dr"><td></td><td style="padding-left:16px">📅 ${dateLabel}</td><td class="r">${priceDisp}</td><td class="r">${isUS?'US$'+fmt(s.cost,2):'$'+fmt(s.cost)}</td><td class="r">${fmt(s.shares,0)}</td><td class="r">${bMV!=null?'$'+fmt(bMV):'—'}</td><td class="r ${bcls}">${bPnl!=null?bsg+'$'+fmt(Math.abs(bPnl)):'—'}</td><td class="r ${bcls}">${bPct!=null?bsg+bPct.toFixed(1)+'%':'—'}</td></tr>`;
       });
     }
   });
@@ -566,8 +571,8 @@ function sortGroups(groups){
 
 function renderAll(){
   const mvs=renderSummary();
-  renderTbl('dad1-tbody',stocks.filter(s=>s.owner==='dad'&&(s.op_type==='old'||s.op_type==='none')),'dad-old');
-  renderTbl('dad2-tbody',stocks.filter(s=>s.owner==='dad'&&s.op_type==='mine'),'dad-mine');
+  renderTbl('dad1-tbody',stocks.filter(s=>s.owner==='dad'&&isDadOld(s)),'dad-old');
+  renderTbl('dad2-tbody',stocks.filter(s=>s.owner==='dad'&&!isDadOld(s)),'dad-mine');
   renderTbl('mom-tbody',stocks.filter(s=>s.owner==='mom'),'mom');
   renderTbl('me-tbody',stocks.filter(s=>s.owner==='me'),'me');
   return mvs;
@@ -580,7 +585,7 @@ async function init(){
   const result=await fetchAllPrices();
   ic.className='';ic.textContent='↻';
   const now=new Date(),t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  setStatus(result.fail===0?'已更新 '+t:result.ok+'成功/'+result.fail+'失敗',result.fail>0);
+  setStatus(result.fail===0?'已更新 '+t:result.ok+'成功/'+result.fail+'失敗：'+(result.failed||[]).slice(0,5).join('、')+((result.failed||[]).length>5?'…':''),result.fail>0);
   const mvs=renderAll();
   // Save snapshot after successful price update
   if(mvs&&mvs.total>0){await saveSnapshot(mvs.total,mvs.dad,mvs.mom,mvs.me);}

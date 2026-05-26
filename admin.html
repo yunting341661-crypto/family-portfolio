@@ -173,27 +173,20 @@ AAPL,蘋果,us,10,185,me,none,holding,,,,
 
 <div class="modal-bg" id="add-modal">
   <div class="modal">
-    <h2>新增持股</h2>
+    <h2>新增交易</h2>
+    <div class="field"><label>交易類型</label><select id="m-action" onchange="onActionChange()"><option value="buy">買進／新增持股</option><option value="sell">賣出</option></select></div>
     <div class="field"><label>持有人</label><select id="m-own" onchange="onOwnChange()"><option value="dad">爸爸</option><option value="mom">媽媽</option><option value="me">我</option></select></div>
     <div class="field"><label>市場</label><select id="m-mkt"><option value="tw">台股</option><option value="us">美股</option></select></div>
     <div class="field"><label>股票代號</label><input type="text" id="m-tkr" placeholder="例：2330 或 NVDA" style="text-transform:uppercase"></div>
     <div class="field"><label>股票名稱</label><input type="text" id="m-name" placeholder="例：台積電"></div>
     <div class="field"><label>Yahoo 代號（特殊市場才填）</label><input type="text" id="m-yahoo" placeholder="例：5274.TWO"><div class="hint">一般台股不用填，自動加 .TW</div></div>
     <div class="field"><label>股數</label><input type="number" id="m-shr" placeholder="例：1000" min="1"></div>
-    <div class="field"><label>買入成本（每股）</label><input type="number" id="m-cost" placeholder="台幣 或 美元" step="0.01" min="0"></div>
-    <div class="field"><label>買入日期</label><input type="date" id="m-bdate"></div>
-    <div class="field"><label>狀態</label><select id="m-status" onchange="onStatusChange()"><option value="holding">持有中</option><option value="sold">已賣出</option></select></div>
+    <div class="field"><label id="m-cost-label">買入成本／成交均價（每股）</label><input type="number" id="m-cost" placeholder="台幣 或 美元" step="0.01" min="0"><div class="hint">建議填券商成交均價；賣出時可留空，系統會用目前持股加權成本。</div></div>
+    <div class="field"><label id="m-date-label">買入日期</label><input type="date" id="m-bdate"></div>
+    <input type="hidden" id="m-status" value="holding">
     <div id="sell-fields" style="display:none">
       <div class="field"><label>賣出價（每股）</label><input type="number" id="m-sprice" step="0.01" min="0"></div>
       <div class="field"><label>賣出日期</label><input type="date" id="m-sdate"></div>
-    </div>
-    <div id="op-field" style="display:none">
-      <div class="field"><label>類型</label>
-        <select id="m-optype">
-          <option value="old">爸爸舊持股（不計入操盤）</option>
-          <option value="mine">我幫他買的（計入操盤績效）</option>
-        </select>
-      </div>
     </div>
     <div class="merr" id="m-err"></div>
     <div class="mbtns">
@@ -215,9 +208,14 @@ function fmtM(n){return n==null?'—':Number(n).toLocaleString('zh-TW',{minimumF
 function fmtMoney(n,isUS){return n==null?'—':(isUS?'US$':'$')+fmt(Math.abs(n))}
 function pnlCls(v){return v>0?'pos':v<0?'neg':'neu'}
 function sign(v){return v>=0?'+':''}
+function isDadOld(s){return s.owner==='dad' && Number(s.cost)===0}
+function autoOpType(owner,cost){return owner==='dad' && Number(cost)===0 ? 'old' : 'none'}
+function isETF(ticker){return /^(00|008|009)/.test(String(ticker||''))}
+function calcFee(amount){return amount>0?Math.max(Math.round(amount*0.001425),20):0}
+function calcTax(amount,ticker){return amount>0?Math.round(amount*(isETF(ticker)?0.001:0.003)):0}
 
 async function sbFetch(method,path,body){
-  const r=await fetch(SB+'/rest/v1/'+path,{method,headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:method==='POST'?'return=representation':''},body:body?JSON.stringify(body):undefined});
+  const r=await fetch(SB+'/rest/v1/'+path,{method,headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:(method==='POST'||method==='PATCH')?'return=representation':''},body:body?JSON.stringify(body):undefined});
   if(!r.ok)throw new Error(await r.text());
   return method==='DELETE'?null:r.json();
 }
@@ -256,11 +254,13 @@ async function refreshAll(){
   const ic=g('ricon');ic.textContent='⟳';ic.className='spin';
   setStatus('更新中...',false);
   const syms=[...new Set(holding.map(getSymbol))];
-  let ok=0,fail=0;
-  await Promise.all(syms.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else fail++;}));
+  let ok=0,fail=0,failed=[];
+  await Promise.all(syms.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else{fail++;failed.push(sym);}}));
   ic.className='';ic.textContent='↻';
   const now=new Date(),t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  setStatus(fail===0?'已更新 '+t:ok+'成功/'+fail+'失敗',fail>0);
+  if(fail===0) setStatus('已更新 '+t,false);
+  else setStatus(ok+'成功/'+fail+'失敗：'+failed.slice(0,5).join('、')+(failed.length>5?'…':''),true);
+  if(failed.length) console.warn('報價同步失敗',failed);
   renderAll();
 }
 
@@ -280,7 +280,9 @@ function getCostTWD(s){
 function getRealized(s){
   if(s.status!=='sold'||s.sell_price==null)return 0;
   const rate=s.market==='us'?getRate():1;
-  return(s.sell_price-s.cost)*rate*s.shares;
+  const gross=(s.sell_price-s.cost)*rate*s.shares;
+  const amount=s.sell_price*rate*s.shares;
+  return gross-calcFee(amount)-calcTax(amount,s.ticker);
 }
 function getPriceDisplay(s){
   const p=getPrice(s);if(p==null)return'—';
@@ -296,7 +298,7 @@ function groupStocks(list){
     const key=s.ticker+'|'+s.owner+'|'+s.status;
     if(!map[key])map[key]={
       ticker:s.ticker,name:s.name||'',market:s.market,owner:s.owner,
-      status:s.status,op_type:s.op_type||'none',
+      status:s.status,op_type:isDadOld(s)?'old':'none',
       yahoo_symbol:s.yahoo_symbol||null,
       batches:[],totalShares:0,totalCostTWD:0,totalRealized:0
     };
@@ -306,8 +308,7 @@ function groupStocks(list){
     g.totalCostTWD+=getCostTWD(s);
     g.totalRealized+=getRealized(s);
     if(s.name&&!g.name)g.name=s.name;
-    if(s.op_type==='mine')g.op_type='mine';
-    if(s.op_type==='old'&&g.op_type==='none')g.op_type='old';
+    if(isDadOld(s))g.op_type='old';
     if(s.yahoo_symbol&&!g.yahoo_symbol)g.yahoo_symbol=s.yahoo_symbol;
   });
   return Object.values(map);
@@ -375,10 +376,10 @@ function renderTable(){
 
     html+=`<tr class="gr" onclick="toggleGroup('${gkey}')">
       <td><button class="exp ${multi?(isOpen?'open':''):''}" style="${multi?'':'visibility:hidden'}">${multi?'▶':''}</button></td>
-      <td><b>${grp.ticker}</b><span class="badge ${isUS?'b-us':'b-tw'}">${isUS?'US':'TW'}</span>${grp.op_type==='mine'?'<span class="badge b-mine">操盤</span>':''}${grp.op_type==='old'?'<span class="badge b-old">舊股</span>':''}${isSold?'<span class="badge b-sold">出清</span>':''}<div style="font-size:11px;color:var(--text2)">${grp.name}</div></td>
+      <td><b>${grp.ticker}</b><span class="badge ${isUS?'b-us':'b-tw'}">${isUS?'US':'TW'}</span>${grp.op_type==='old'?'<span class="badge b-old">舊股</span>':''}${isSold?'<span class="badge b-sold">出清</span>':''}<div style="font-size:11px;color:var(--text2)">${grp.name}</div></td>
       <td class="r">${priceDisp}</td>
       <td class="r" style="color:var(--text2)">${avgCostDisp}</td>
-      <td class="r">${fmt(grp.totalShares)}</td>
+      <td class="r">${fmt(grp.totalShares,0)}</td>
       <td class="r">${mvDisp}</td>
       <td class="r ${cls}">${pnlDisp}</td>
       <td class="r ${cls}">${pctDisp}</td>
@@ -399,7 +400,7 @@ function renderTable(){
           <td style="padding-left:18px">📅 ${dateLabel}</td>
           <td class="r">${priceDisp}</td>
           <td class="r">${isUS?'US$'+fmt(s.cost,2):'$'+fmt(s.cost)}</td>
-          <td class="r">${fmt(s.shares)}</td>
+          <td class="r">${fmt(s.shares,0)}</td>
           <td class="r">${bMV!=null?'$'+fmt(bMV):'—'}</td>
           <td class="r ${bcls}">${bPnl!=null?bsg+'$'+fmt(Math.abs(bPnl)):'—'}</td>
           <td class="r ${bcls}">${bPct!=null?bsg+bPct.toFixed(1)+'%':'—'}</td>
@@ -430,8 +431,8 @@ function sortGroups(groups){
       const symA=a.yahoo_symbol||(a.market==='tw'?a.ticker+'.TW':a.ticker);
       const symB=b.yahoo_symbol||(b.market==='tw'?b.ticker+'.TW':b.ticker);
       const pA=prices[symA];const pB=prices[symB];
-      const mvA=a.status==='sold'?null:(pA?(pA*(a.market==='us'?rate:1))*a.totalShares:null);
-      const mvB=b.status==='sold'?null:(pB?(pB*(b.market==='us'?rate:1))*b.totalShares:null);
+      const mvA=a.status==='sold'?null:(pA?(pA*(a.market==='us'?getRate():1))*a.totalShares:null);
+      const mvB=b.status==='sold'?null:(pB?(pB*(b.market==='us'?getRate():1))*b.totalShares:null);
       va=a.status==='sold'?a.totalRealized:(mvA!=null?mvA-a.totalCostTWD:null);
       vb=b.status==='sold'?b.totalRealized:(mvB!=null?mvB-b.totalCostTWD:null);
       if(va==null&&vb==null)return 0;if(va==null)return 1;if(vb==null)return -1;
@@ -440,8 +441,8 @@ function sortGroups(groups){
       const symA=a.yahoo_symbol||(a.market==='tw'?a.ticker+'.TW':a.ticker);
       const symB=b.yahoo_symbol||(b.market==='tw'?b.ticker+'.TW':b.ticker);
       const pA=prices[symA];const pB=prices[symB];
-      const mvA=a.status==='sold'?null:(pA?(pA*(a.market==='us'?rate:1))*a.totalShares:null);
-      const mvB=b.status==='sold'?null:(pB?(pB*(b.market==='us'?rate:1))*b.totalShares:null);
+      const mvA=a.status==='sold'?null:(pA?(pA*(a.market==='us'?getRate():1))*a.totalShares:null);
+      const mvB=b.status==='sold'?null:(pB?(pB*(b.market==='us'?getRate():1))*b.totalShares:null);
       const pnlA=a.status==='sold'?a.totalRealized:(mvA!=null?mvA-a.totalCostTWD:null);
       const pnlB=b.status==='sold'?b.totalRealized:(mvB!=null?mvB-b.totalCostTWD:null);
       va=pnlA!=null&&a.totalCostTWD>0?pnlA/a.totalCostTWD:null;
@@ -457,29 +458,63 @@ function toggleGroup(key){expanded[key]=!expanded[key];renderTable()}
 function setFilter(f,btn){curFilter=f;document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');renderTable()}
 
 // Modal
-function onOwnChange(){const own=g('m-own').value;g('op-field').style.display=own==='dad'?'block':'none'}
-function onStatusChange(){const s=g('m-status').value;g('sell-fields').style.display=s==='sold'?'block':'none'}
-function openAddModal(){g('add-modal').classList.add('open');onOwnChange();onStatusChange()}
+function onOwnChange(){}
+function onStatusChange(){onActionChange()}
+function onActionChange(){
+  const action=g('m-action').value;
+  const sell=action==='sell';
+  g('sell-fields').style.display=sell?'block':'none';
+  g('m-status').value=sell?'sold':'holding';
+  g('m-cost-label').textContent=sell?'成本（可留空，系統用目前持股加權成本）':'買入成本／成交均價（每股）';
+  g('m-date-label').textContent=sell?'交易日期':'買入日期';
+}
+function openAddModal(){g('add-modal').classList.add('open');onActionChange()}
 function closeAddModal(){g('add-modal').classList.remove('open');g('m-err').style.display='none'}
+
+function normalizeTicker(t){return String(t||'').trim().toUpperCase()}
+function findHoldings(owner,ticker){return stocks.filter(s=>s.owner===owner&&s.ticker===ticker&&s.status!=='sold').sort((a,b)=>(a.buy_date||'9999')<(b.buy_date||'9999')?-1:1)}
+async function patchStock(id,body){return sbFetch('PATCH','stocks?id=eq.'+id,body)}
+async function addSellTransaction({own,mkt,tkr,name,yahoo,shr,sprice,sdate}){
+  const lots=findHoldings(own,tkr);
+  const totalShares=lots.reduce((a,s)=>a+(Number(s.shares)||0),0);
+  if(totalShares<shr)throw new Error('持股不足：目前只有 '+totalShares+' 股');
+  const totalCost=lots.reduce((a,s)=>a+(Number(s.cost)||0)*(Number(s.shares)||0),0);
+  const avgCost=totalShares>0?totalCost/totalShares:0;
+  let remain=shr;
+  for(const lot of lots){
+    if(remain<=0)break;
+    const lotShares=Number(lot.shares)||0;
+    const take=Math.min(lotShares,remain);
+    if(take>=lotShares){await sbFetch('DELETE','stocks?id=eq.'+lot.id)}
+    else{await patchStock(lot.id,{shares:lotShares-take})}
+    remain-=take;
+  }
+  await sbFetch('POST','stocks',{ticker:tkr,name:name||lots[0]?.name||null,market:mkt,shares:shr,cost:avgCost,owner:own,op_type:'none',status:'sold',sell_price:sprice,sell_date:sdate||null,buy_date:sdate||null,yahoo_symbol:yahoo||lots[0]?.yahoo_symbol||null});
+}
 
 async function doAdd(){
   const errEl=g('m-err');errEl.style.display='none';
+  const action=g('m-action').value;
   const own=g('m-own').value,mkt=g('m-mkt').value;
-  const tkr=g('m-tkr').value.trim().toUpperCase();
+  const tkr=normalizeTicker(g('m-tkr').value);
   const name=g('m-name').value.trim();
   const yahoo=g('m-yahoo').value.trim().toUpperCase()||null;
   const shr=parseFloat(g('m-shr').value);
-  const cost=parseFloat(g('m-cost').value);
+  const costRaw=g('m-cost').value;
+  const cost=parseFloat(costRaw);
   const bdate=g('m-bdate').value||null;
-  const status=g('m-status').value;
-  const sprice=status==='sold'?parseFloat(g('m-sprice').value):null;
-  const sdate=status==='sold'?(g('m-sdate').value||null):null;
-  const optype=own==='dad'?g('m-optype').value:'none';
+  const sprice=parseFloat(g('m-sprice').value);
+  const sdate=g('m-sdate').value||bdate||null;
   if(!tkr){errEl.textContent='請輸入股票代號';errEl.style.display='block';return}
   if(!shr||shr<=0){errEl.textContent='請輸入正確股數';errEl.style.display='block';return}
-  if(isNaN(cost)||cost<0){errEl.textContent='請輸入成本';errEl.style.display='block';return}
   try{
-    await sbFetch('POST','stocks',{ticker:tkr,name:name||null,market:mkt,shares:shr,cost,owner:own,op_type:optype,status,sell_price:sprice||null,sell_date:sdate,buy_date:bdate,yahoo_symbol:yahoo});
+    if(action==='buy'){
+      if(isNaN(cost)||cost<0){errEl.textContent='請輸入成本';errEl.style.display='block';return}
+      await sbFetch('POST','stocks',{ticker:tkr,name:name||null,market:mkt,shares:shr,cost,owner:own,op_type:autoOpType(own,cost),status:'holding',sell_price:null,sell_date:null,buy_date:bdate,yahoo_symbol:yahoo});
+    }else{
+      if(isNaN(sprice)||sprice<=0){errEl.textContent='請輸入賣出價';errEl.style.display='block';return}
+      await addSellTransaction({own,mkt,tkr,name,yahoo,shr,sprice,sdate});
+    }
     await loadStocks();closeAddModal();
     ['m-tkr','m-name','m-yahoo','m-shr','m-cost','m-bdate','m-sprice','m-sdate'].forEach(id=>g(id).value='');
     sortKey=null;sortDir=1;document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('asc','desc'));
@@ -499,10 +534,22 @@ async function clearAll(){
 }
 
 // CSV
+function splitCSVLine(line){
+  const out=[];let cur='',q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i],nx=line[i+1];
+    if(ch==='"'&&q&&nx==='"'){cur+='"';i++;continue;}
+    if(ch==='"'){q=!q;continue;}
+    if(ch===','&&!q){out.push(cur.trim());cur='';continue;}
+    cur+=ch;
+  }
+  out.push(cur.trim());
+  return out;
+}
 function parseCSV(text){
-  const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim());
-  const hdr=lines[0].split(',').map(h=>h.trim().toLowerCase());
-  return lines.slice(1).map(line=>{const cols=line.split(',').map(c=>c.trim());const obj={};hdr.forEach((h,i)=>obj[h]=cols[i]||'');return obj;});
+  const lines=text.replace(/^\uFEFF/,'').replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  const hdr=splitCSVLine(lines[0]).map(h=>h.replace(/^\uFEFF/,'').trim().toLowerCase());
+  return lines.slice(1).map(line=>{const cols=splitCSVLine(line);const obj={};hdr.forEach((h,i)=>obj[h]=cols[i]||'');return obj;});
 }
 function validateRow(row){
   const errs=[];
@@ -511,7 +558,7 @@ function validateRow(row){
   const shares=parseFloat(row.shares);
   const cost=parseFloat(row.cost);
   const owner=(row.owner||'dad').toLowerCase();
-  const op_type=(row.op_type||'none').toLowerCase();
+  let op_type=(row.op_type||'none').toLowerCase();
   const status=(row.status||'holding').toLowerCase();
   const sell_price=row.sell_price?parseFloat(row.sell_price):null;
   const sell_date=row.sell_date||null;
@@ -523,6 +570,8 @@ function validateRow(row){
   if(isNaN(shares)||shares<=0)errs.push('股數錯');
   if(isNaN(cost)||cost<0)errs.push('成本錯');
   if(!['dad','mom','me'].includes(owner))errs.push('owner錯');
+  op_type=autoOpType(owner,cost); /* 自動判斷：只有爸爸成本0是舊股 */
+  if(!['holding','sold'].includes(status))errs.push('status錯');
   return{ticker,market,shares,cost,owner,op_type,status,sell_price,sell_date,buy_date,yahoo_symbol,name,errs};
 }
 function showPreview(rows){
