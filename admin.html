@@ -396,7 +396,10 @@ function renderTable(){
       <td class="r ${cls}">${pnlDisp}</td>
       <td class="r ${cls}">${pctDisp}</td>
       <td style="color:var(--text2)">${ownerLabel[grp.owner]||grp.owner}</td>
-      <td>${!multi?`<button onclick="event.stopPropagation();delStock('${grp.batches[0].id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px" title="刪除">🗑</button>`:''}</td>
+      <td>
+        <button onclick="event.stopPropagation();openSellModal('${grp.ticker}','${grp.owner}')" style="background:none;border:none;cursor:pointer;color:var(--pos);font-size:12px;padding:0 4px" title="賣出">賣出</button>
+        ${!multi?`<button onclick="event.stopPropagation();delStock('${grp.batches[0].id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px" title="刪除">🗑</button>`:''}
+      </td>
     </tr>`;
 
     if(multi&&isOpen){
@@ -591,6 +594,83 @@ function exportCSV(){
   catch(e){setStatus('載入失敗',true);console.error(e);}
 })();
 setInterval(async()=>{if(stocks.filter(s=>s.status!=='sold').length)await refreshAll();},5*60*1000);
+
+let sellTarget = null;
+
+function openSellModal(ticker, owner) {
+  const holding = stocks.filter(s => s.ticker === ticker && s.owner === owner && s.status !== 'sold');
+  if (!holding.length) return;
+  const totalShares = holding.reduce((a, s) => a + Number(s.shares), 0);
+  const totalCost = holding.reduce((a, s) => a + s.cost * Number(s.shares), 0);
+  const avgCost = totalCost / totalShares;
+  const market = holding[0].market;
+  const name = holding[0].name || ticker;
+  sellTarget = { ticker, owner, market, name, batches: holding, totalShares, avgCost };
+  const info = g('sell-modal-info');
+  info.innerHTML = '<b>'+ticker+'</b> '+name+'<br>持有股數：<b>'+totalShares+'</b> 股<br>加權均價：'+(market==='us'?'US$':'$')+avgCost.toFixed(2)+'／股';
+  g('sm-shares').value = '';
+  g('sm-shares').max = totalShares;
+  g('sm-sprice').value = '';
+  g('sm-sdate').value = new Date().toISOString().slice(0, 10);
+  g('sm-err').style.display = 'none';
+  g('sell-modal').classList.add('open');
+}
+
+function closeSellModal() {
+  g('sell-modal').classList.remove('open');
+  sellTarget = null;
+}
+
+async function doSellConfirm() {
+  const errEl = g('sm-err');
+  errEl.style.display = 'none';
+  const sellShares = parseInt(g('sm-shares').value);
+  const sprice = parseFloat(g('sm-sprice').value);
+  const sdate = g('sm-sdate').value;
+  if (!sellShares || sellShares <= 0) { errEl.textContent = '請輸入賣出股數'; errEl.style.display = 'block'; return; }
+  if (sellShares > sellTarget.totalShares) { errEl.textContent = '超過持有股數 '+sellTarget.totalShares+' 股'; errEl.style.display = 'block'; return; }
+  if (!sprice || sprice <= 0) { errEl.textContent = '請輸入賣出價'; errEl.style.display = 'block'; return; }
+  if (!sdate) { errEl.textContent = '請輸入賣出日期'; errEl.style.display = 'block'; return; }
+  const netSellPrice = calcNetSellPricePerShare(sellTarget.ticker, sellTarget.market, sprice, sellShares);
+  try {
+    let remaining = sellShares;
+    const batches = [...sellTarget.batches].sort((a, b) => {
+      const da = a.buy_date || '9999', db = b.buy_date || '9999';
+      return da < db ? -1 : da > db ? 1 : 0;
+    });
+    for (const batch of batches) {
+      if (remaining <= 0) break;
+      const bShares = Number(batch.shares);
+      if (remaining >= bShares) {
+        await sbFetch('PATCH', 'stocks?id=eq.'+batch.id, {status:'sold',sell_price:netSellPrice,sell_date:sdate});
+        remaining -= bShares;
+      } else {
+        await sbFetch('PATCH', 'stocks?id=eq.'+batch.id, {shares: bShares - remaining});
+        await sbFetch('POST', 'stocks', {ticker:batch.ticker,name:batch.name,market:batch.market,shares:remaining,cost:batch.cost,owner:batch.owner,op_type:batch.op_type,status:'sold',sell_price:netSellPrice,sell_date:sdate,buy_date:batch.buy_date,yahoo_symbol:batch.yahoo_symbol});
+        remaining = 0;
+      }
+    }
+    await loadStocks(); closeSellModal(); renderAll();
+  } catch(e) { errEl.textContent = '賣出失敗：'+e.message; errEl.style.display = 'block'; }
+}
+
 </script>
+
+<!-- Sell Modal -->
+<div class="modal-bg" id="sell-modal">
+  <div class="modal" style="max-width:380px">
+    <h2>賣出持股</h2>
+    <div id="sell-modal-info" style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;margin-bottom:1rem;font-size:13px;line-height:1.8"></div>
+    <div class="field"><label>賣出股數</label><input type="number" id="sm-shares" step="1" min="1" placeholder="例：1000"></div>
+    <div class="field"><label>賣出成交價（每股，未扣稅費）</label><input type="number" id="sm-sprice" step="0.01" min="0" placeholder="例：320"></div>
+    <div class="hint" style="font-size:11px;color:var(--text3);margin-bottom:8px">系統會自動計算手續費與證交稅</div>
+    <div class="field"><label>賣出日期</label><input type="date" id="sm-sdate"></div>
+    <div class="merr" id="sm-err"></div>
+    <div class="mbtns">
+      <button class="btn" onclick="closeSellModal()">取消</button>
+      <button class="btn btn-dark" onclick="doSellConfirm()">確認賣出</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
