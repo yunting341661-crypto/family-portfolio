@@ -295,7 +295,8 @@ async function sbFetch(path){
   return r.json();
 }
 async function sbPost(path,body){
-  await fetch(SB+'/rest/v1/'+path,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const r=await fetch(SB+'/rest/v1/'+path,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(body)});
+  if(!r.ok){const t=await r.text();throw new Error(t);}
 }
 
 async function loadStocks(){
