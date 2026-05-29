@@ -208,6 +208,42 @@ const SB='https://nqauumyfpdqkkqfjxury.supabase.co';
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xYXV1bXlmcGRxa2txZmp4dXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mjk4MDYsImV4cCI6MjA5NTEwNTgwNn0.j-Ql0_eDLiCLRDyEzbzjVtq4mw7ORdk9eLniDR7zyow';
 let stocks=[],prices={},curFilter='all',expanded={},importRows=[];
 
+const TW_FEE_RATE = 0.001425 * 0.28;
+const TW_MIN_FEE = 20;
+const TW_STOCK_TAX_RATE = 0.003;
+const TW_ETF_TAX_RATE = 0.001;
+
+function isETF(ticker){
+  const t=String(ticker||'').padStart(4,'0');
+  return t.startsWith('00');
+}
+function calcTwFee(amount){
+  amount=Number(amount)||0;
+  if(amount<=0)return 0;
+  return Math.max(TW_MIN_FEE, Math.round(amount*TW_FEE_RATE));
+}
+function calcTwTax(amount,ticker){
+  amount=Number(amount)||0;
+  if(amount<=0)return 0;
+  return Math.round(amount*(isETF(ticker)?TW_ETF_TAX_RATE:TW_STOCK_TAX_RATE));
+}
+function calcBuyCostPerShare(ticker,market,price,shares){
+  price=Number(price)||0;shares=Number(shares)||0;
+  if(market!=='tw'||price<=0||shares<=0)return price;
+  const amount=price*shares;
+  const fee=calcTwFee(amount);
+  return (amount+fee)/shares;
+}
+function calcNetSellPricePerShare(ticker,market,price,shares){
+  price=Number(price)||0;shares=Number(shares)||0;
+  if(market!=='tw'||price<=0||shares<=0)return price;
+  const amount=price*shares;
+  const fee=calcTwFee(amount);
+  const tax=calcTwTax(amount,ticker);
+  return (amount-fee-tax)/shares;
+}
+
+
 function g(id){return document.getElementById(id)}
 function getRate(){return parseFloat(g('rate-input').value)||32.5}
 function fmt(n,dec=2){return n==null?'—':Number(n).toLocaleString('zh-TW',{minimumFractionDigits:dec,maximumFractionDigits:dec})}
