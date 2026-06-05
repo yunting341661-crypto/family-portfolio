@@ -338,7 +338,12 @@ async function fetchAllPrices(){
   if(!holding.length)return{ok:0,fail:0};
   const syms=[...new Set(holding.map(getSymbol))];
   let ok=0,fail=0;
-  await Promise.all(syms.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else fail++;}));
+  const BATCH=5;
+  for(let i=0;i<syms.length;i+=BATCH){
+    const batch=syms.slice(i,i+BATCH);
+    await Promise.all(batch.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else fail++;}));
+    if(i+BATCH<syms.length)await new Promise(r=>setTimeout(r,300));
+  }
   return{ok,fail};
 }
 async function fetchRate(){
