@@ -318,19 +318,7 @@ function getCostTWD(s){return s.cost*(s.market==='us'?rate:1)*s.shares}
 function getRealized(s){if(s.status!=='sold'||s.sell_price==null)return 0;return(s.sell_price-s.cost)*(s.market==='us'?rate:1)*s.shares}
 
 async function fetchPrice(sym){
-  const symsToTry=[sym];
-  if(sym.endsWith('.TW'))symsToTry.push(sym.replace('.TW','.TWO'));
-  for(const s of symsToTry){
-    try{
-      const yahooUrl='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(s)+'?interval=1d&range=1d';
-      const proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(yahooUrl);
-      const r=await fetch(proxyUrl);
-      const d=await r.json();
-      const meta=d?.chart?.result?.[0]?.meta;
-      const price=meta?.regularMarketPrice||meta?.previousClose||null;
-      if(price!=null)return price;
-    }catch(e){}
-  }
+  try{const r=await fetch(SB+'/functions/v1/hyper-api?symbol='+encodeURIComponent(sym));const d=await r.json();if(d.price!=null)return d.price;}catch(e){}
   return null;
 }
 async function fetchAllPrices(){
@@ -338,24 +326,11 @@ async function fetchAllPrices(){
   if(!holding.length)return{ok:0,fail:0};
   const syms=[...new Set(holding.map(getSymbol))];
   let ok=0,fail=0;
-  const BATCH=20;
-  for(let i=0;i<syms.length;i+=BATCH){
-    const batch=syms.slice(i,i+BATCH);
-    await Promise.all(batch.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else fail++;}));
-    if(i+BATCH<syms.length)await new Promise(r=>setTimeout(r,100));
-  }
+  await Promise.all(syms.map(async sym=>{const p=await fetchPrice(sym);if(p!=null){prices[sym]=p;ok++;}else fail++;}));
   return{ok,fail};
 }
 async function fetchRate(){
-  try{
-    const yahooUrl='https://query1.finance.yahoo.com/v8/finance/chart/TWD%3DX?interval=1d&range=1d';
-    const proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(yahooUrl);
-    const r=await fetch(proxyUrl);
-    const d=await r.json();
-    const meta=d?.chart?.result?.[0]?.meta;
-    const price=meta?.regularMarketPrice||meta?.previousClose||null;
-    if(price){rate=price;g('rate-display').textContent=rate.toFixed(2);const now=new Date();g('rate-time').textContent='更新於 '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');}
-  }catch(e){}
+  try{const r=await fetch(SB+'/functions/v1/hyper-api?symbol=TWD%3DX');const d=await r.json();if(d.price){rate=d.price;g('rate-display').textContent=rate.toFixed(2);const now=new Date();g('rate-time').textContent='更新於 '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');}}catch(e){}
 }
 
 // Collapse/expand
