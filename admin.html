@@ -290,6 +290,9 @@ async function fetchPrice(sym){
   return null;
 }
 
+  return null;
+}
+
 async function fetchRate(){
   g('rate-status').textContent='抓取中...';
   try{
@@ -628,10 +631,10 @@ function exportCSV(){
 
 (async()=>{
   setStatus('載入中...',false);
-  try{await loadStocks();renderAll();if(stocks.filter(s=>s.status!=='sold').length)await refreshAll();else setStatus('尚無持股',false);}
+  try{await loadStocks();renderAll();setStatus('請按「更新報價」載入即時報價',false);}
   catch(e){setStatus('載入失敗',true);console.error(e);}
 })();
-setInterval(async()=>{if(stocks.filter(s=>s.status!=='sold').length)await refreshAll();},5*60*1000);
+// 已停用自動更新，請手動按「更新報價」
 
 let sellTarget = null;
 

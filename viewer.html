@@ -605,8 +605,7 @@ async function init(){
     await loadStocks();
     renderAll();
     await loadChart();
-    if(stocks.filter(s=>s.status!=='sold').length)await init();
-    else setStatus('尚無持股',false);
+    setStatus('請按「更新報價」載入即時報價',false);
   }catch(e){setStatus('載入失敗',true);console.error(e);}
 })();
 </script>
