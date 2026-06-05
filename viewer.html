@@ -594,6 +594,8 @@ async function init(){
   const now=new Date(),t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   setStatus(result.fail===0?'已更新 '+t:result.ok+'成功/'+result.fail+'失敗',result.fail>0);
   const mvs=renderAll();
+  // Save prices to localStorage
+  try{localStorage.setItem('prices_cache',JSON.stringify({prices,rate,time:new Date().toISOString()}));}catch(e){}
   // Save snapshot after successful price update
   if(mvs&&mvs.total>0){await saveSnapshot(mvs.total,mvs.dad,mvs.mom,mvs.me);}
   await loadChart();
@@ -605,7 +607,18 @@ async function init(){
     await loadStocks();
     renderAll();
     await loadChart();
-    setStatus('請按「更新報價」載入即時報價',false);
+    const cached=JSON.parse(localStorage.getItem('prices_cache')||'null');
+    if(cached&&cached.prices){
+      prices=cached.prices;
+      if(cached.rate)rate=cached.rate;
+      const cacheTime=new Date(cached.time);
+      const mins=Math.round((new Date()-cacheTime)/60000);
+      g('rate-display').textContent=rate.toFixed(2);
+      setStatus('上次更新：'+mins+'分鐘前（'+cacheTime.getHours().toString().padStart(2,'0')+':'+cacheTime.getMinutes().toString().padStart(2,'0')+'）',false);
+      renderAll();
+    }else{
+      setStatus('請按「更新報價」載入即時報價',false);
+    }
   }catch(e){setStatus('載入失敗',true);console.error(e);}
 })();
 </script>
