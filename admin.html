@@ -281,11 +281,31 @@ function getSymbol(s){
 }
 
 async function fetchPrice(sym){
+  // Try .TW first, then .TWO
+  const symsToTry=[sym];
+  if(sym.endsWith('.TW'))symsToTry.push(sym.replace('.TW','.TWO'));
+  for(const s of symsToTry){
+    try{
+      const yahooUrl='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(s)+'?interval=1d&range=1d';
+      const proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(yahooUrl);
+      const r=await fetch(proxyUrl);
+      const d=await r.json();
+      const meta=d?.chart?.result?.[0]?.meta;
+      const price=meta?.regularMarketPrice||meta?.previousClose||null;
+      if(price!=null)return price;
+    }catch(e){}
+  }
+  return null;
+}
+
+async function fetchRateDirect(){
   try{
-    const url='https://nqauumyfpdqkkqfjxury.supabase.co/functions/v1/hyper-api?symbol='+encodeURIComponent(sym);
-    const r=await fetch(url);
+    const yahooUrl='https://query1.finance.yahoo.com/v8/finance/chart/TWD%3DX?interval=1d&range=1d';
+    const proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(yahooUrl);
+    const r=await fetch(proxyUrl);
     const d=await r.json();
-    if(d.price!=null)return d.price;
+    const meta=d?.chart?.result?.[0]?.meta;
+    return meta?.regularMarketPrice||null;
   }catch(e){}
   return null;
 }
@@ -293,10 +313,8 @@ async function fetchPrice(sym){
 async function fetchRate(){
   g('rate-status').textContent='抓取中...';
   try{
-    const url='https://nqauumyfpdqkkqfjxury.supabase.co/functions/v1/hyper-api?symbol=TWD%3DX';
-    const r=await fetch(url);
-    const d=await r.json();
-    if(d.price){g('rate-input').value=d.price.toFixed(2);g('rate-status').textContent='✓ 已更新 '+d.price.toFixed(2);}
+    const price=await fetchRateDirect();
+    if(price){g('rate-input').value=price.toFixed(2);g('rate-status').textContent='✓ 已更新 '+price.toFixed(2);}
     else g('rate-status').textContent='抓取失敗，請手動輸入';
   }catch(e){g('rate-status').textContent='抓取失敗';}
 }
